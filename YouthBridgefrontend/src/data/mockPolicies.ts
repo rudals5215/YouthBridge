@@ -1,0 +1,58 @@
+import type { Policy } from "../types/Policy";
+
+export const MOCK_POLICIES: Policy[] = [
+  {
+    id: "1",
+    title: "서울 청년 월세 지원",
+    description: "월 최대 20만원 지원",
+    region: "seoul",
+    minAge: 19,
+    maxAge: 39,
+    category: "주거",
+  },
+  {
+    id: "2",
+    title: "부산 청년 취업 장려금",
+    description: "취업 준비 비용 지원",
+    region: "busan",
+    minAge: 18,
+    maxAge: 34,
+    category: "취업·창업",
+  },
+  {
+    id: "3",
+    title: "인천 청년 대중교통비 지원",
+    description: "교통비 연 최대 10만원",
+    region: "incheon",
+    minAge: 19,
+    maxAge: 39,
+    category: "금융·복지",
+  },
+  {
+    id: "4",
+    title: "전국 청년 도약 계좌",
+    description: "최대 6% 금리 적금",
+    region: "all",
+    minAge: 19,
+    maxAge: 34,
+    category: "금융·복지",
+  },
+  {
+    id: "5",
+    title: "서울 청년 교육비 지원",
+    description: "온라인 강의·자격증 비용 지원",
+    region: "seoul",
+    minAge: 19,
+    maxAge: 34,
+    category: "교육",
+  },
+  {
+    id: "6",
+    title: "전국 청년 건강검진 지원",
+    description: "만 20세·30세 생애 전환기 검진",
+    region: "all",
+    minAge: 20,
+    maxAge: 39,
+    category: "건강",
+  },
+];
