@@ -1,0 +1,60 @@
+.kakao-callback {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gray-50);
+}
+
+.callback-box {
+  background: #fff;
+  border: 1px solid var(--gray-100);
+  border-radius: 1.25rem;
+  padding: 3rem 2.5rem;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  min-width: 280px;
+}
+
+.callback-box p {
+  font-size: 0.95rem;
+  color: var(--gray-600);
+  margin: 1rem 0 0;
+}
+
+.callback-box.error i {
+  font-size: 2.5rem;
+  color: #ef4444;
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.callback-box.error p { color: #ef4444; margin-bottom: 1.25rem; }
+
+.callback-box.error button {
+  padding: 0.6rem 1.25rem;
+  border-radius: 9999px;
+  border: 1.5px solid var(--gray-200);
+  background: #fff;
+  font-size: 0.875rem;
+  color: var(--gray-600);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.callback-box.error button:hover {
+  border-color: var(--primary-400);
+  color: var(--primary-500);
+}
+
+/* 로딩 스피너 */
+.kakao-spinner {
+  width: 40px; height: 40px;
+  border: 3px solid var(--gray-100);
+  border-top-color: #FEE500; /* 카카오 노란색 */
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }

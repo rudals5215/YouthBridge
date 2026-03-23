@@ -1,0 +1,73 @@
+.notfound-page {
+  min-height: calc(100vh - 60px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.notfound-content {
+  text-align: center;
+  max-width: 400px;
+}
+
+.notfound-code {
+  font-size: 6rem;
+  font-weight: 800;
+  color: #e5e7eb;
+  line-height: 1;
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.05em;
+}
+
+.notfound-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 0.75rem;
+}
+
+.notfound-desc {
+  font-size: 1rem;
+  color: #6b7280;
+  margin: 0 0 2rem;
+  line-height: 1.6;
+}
+
+.notfound-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn-back {
+  padding: 0.6rem 1.25rem;
+  border-radius: 9999px;
+  border: 1.5px solid #e5e7eb;
+  background: white;
+  color: #374151;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-back:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.btn-home {
+  padding: 0.6rem 1.25rem;
+  border-radius: 9999px;
+  background: #2563eb;
+  color: white;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.15s;
+}
+
+.btn-home:hover {
+  background: #1d4ed8;
+}
