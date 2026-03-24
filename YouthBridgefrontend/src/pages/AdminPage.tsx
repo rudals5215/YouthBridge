@@ -70,17 +70,20 @@ function AdminPage() {
 
 // ── 대시보드 탭 ────────────────────────────────────────
 function DashboardTab() {
+  const { user } = useAuthStore();
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState("");
 
   useEffect(() => {
+    // ADMIN 아닐 때는 API 호출 안 함
+    if (user?.role !== "ADMIN") return;
     getAdminStats()
       .then(setStats)
       .catch(() => {})
       .finally(() => setIsLoading(false));
-  }, []);
+  }, [user]);
 
   const handleSync = async () => {
     setSyncing(true);

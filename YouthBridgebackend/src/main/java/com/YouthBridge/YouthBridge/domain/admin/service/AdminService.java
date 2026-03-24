@@ -5,6 +5,7 @@ import com.YouthBridge.YouthBridge.domain.admin.dto.AdminUserResponse;
 import com.YouthBridge.YouthBridge.domain.bookmark.repository.BookmarkRepository;
 import com.YouthBridge.YouthBridge.domain.policy.entity.PolicyStatus;
 import com.YouthBridge.YouthBridge.domain.policy.repository.PolicyRepository;
+import com.YouthBridge.YouthBridge.domain.policy.service.PolicyCrawlerService;
 import com.YouthBridge.YouthBridge.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,10 +27,10 @@ public class AdminService {
     private final UserRepository userRepository;
     private final PolicyRepository policyRepository;
     private final BookmarkRepository bookmarkRepository;
+    private final PolicyCrawlerService crawlerService;
 
     // ── 대시보드 통계 ─────────────────────────────────────
     public AdminStatsResponse getStats() {
-        // 오늘 0시 ~ 지금
         LocalDateTime todayStart = LocalDate.now().atStartOfDay();
 
         return AdminStatsResponse.builder()
@@ -63,11 +64,10 @@ public class AdminService {
     }
 
     // ── 공공 API 수동 동기화 ──────────────────────────────
-    // 실제 동기화 로직은 공공 API 크롤링 구현 후 연결
     @Transactional
     public void syncPublicApi() {
         log.info("[Admin] 공공 API 수동 동기화 시작");
-        // TODO: PolicyCrawlerService.crawlAndSave() 호출
+        crawlerService.crawlAndSave();
         log.info("[Admin] 공공 API 수동 동기화 완료");
     }
 }

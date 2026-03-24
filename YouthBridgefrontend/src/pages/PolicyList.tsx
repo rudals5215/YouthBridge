@@ -1,6 +1,6 @@
 import { Link, useSearchParams } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { REGIONS, getRegionLabel } from "../constants/regions";
+import { REGIONS, getRegionLabel } from "../constants/Regions";
 import { usePolicies } from "../hooks/usePolicies";
 import PolicyCardSkeleton from "../components/PolicyCardSkeleton";
 import "./PolicyList.css";

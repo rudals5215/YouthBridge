@@ -1,40 +1,44 @@
 import axios from "axios";
 
-// 모든 API 요청의 기본 설정
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:8080", // Spring Boot 서버 주소
-  timeout: 10000,                   // 10초 안에 응답 없으면 에러
-  headers: {
-    "Content-Type": "application/json",
-  },
+  baseURL: "http://localhost:8080",
+  timeout: 10000,
+  headers: { "Content-Type": "application/json" },
 });
 
-// ── 요청 인터셉터 ─────────────────────────────────────
-// API 요청을 보내기 전에 자동으로 실행돼요
-// localStorage에 저장된 토큰을 꺼내서 헤더에 붙여줘요
+// 요청 인터셉터 — 토큰 자동 첨부
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("accessToken");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+    if (token) config.headers.Authorization = `Bearer ${token}`;
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// ── 응답 인터셉터 ─────────────────────────────────────
-// API 응답이 왔을 때 자동으로 실행돼요
-// 401이 오면 토큰 만료 → 로그아웃 처리
+// 응답 인터셉터
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      // 토큰 만료 시 로컬스토리지 정리 + 로그인 페이지로
+    const status = error.response?.status;
+    const url = error.config?.url ?? "";
+
+    // 401 — 토큰 만료 → 로그아웃
+    if (status === 401) {
       localStorage.removeItem("accessToken");
-      localStorage.removeItem("user");
+      localStorage.removeItem("auth-storage");
       window.location.href = "/login";
     }
+
+    // 403 — 알림/관리자 API는 콘솔 에러 없이 조용히 무시
+    // (ProtectedRoute와 catch(()=>{}) 에서 이미 처리)
+    if (status === 403) {
+      const isSilent =
+        url.includes("/api/notifications") ||
+        url.includes("/api/admin");
+      if (isSilent) return Promise.resolve({ data: null, status: 403 });
+    }
+
     return Promise.reject(error);
   }
 );
