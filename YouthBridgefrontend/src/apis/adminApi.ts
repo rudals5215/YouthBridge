@@ -52,6 +52,23 @@ export const deletePolicy = async (id: number): Promise<void> => {
 };
 
 // 공공 API 수동 동기화
+export interface SyncStatus {
+  running: boolean;
+  saved: number;
+  updated: number;
+  deleted: number;
+  finishedAt: string | null;
+  errorMsg: string | null;
+}
+
+export const getSyncStatus = async (): Promise<SyncStatus> => {
+  const res = await axiosInstance.get<SyncStatus>("/api/admin/sync/status");
+  return res.data;
+};
+
+// 공공 API 수동 동기화 — 크롤링이 수분 걸릴 수 있어서 timeout 별도 설정
 export const syncPublicApi = async (): Promise<void> => {
-  await axiosInstance.post("/api/admin/sync");
+  await axiosInstance.post("/api/admin/sync", null, {
+    timeout: 600000,
+  });
 };

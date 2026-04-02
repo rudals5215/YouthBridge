@@ -35,4 +35,9 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     @Modifying
     @Query("DELETE FROM Notification n WHERE n.isRead = true AND n.createdAt < :before")
     void deleteOldReadNotifications(@Param("before") LocalDateTime before);
+
+    // 중복 알림 방지 — 같은 유저/정책에 오늘 이미 알림이 있는지 확인
+    boolean existsByUserIdAndPolicyIdAndCreatedAtAfter(
+        Long userId, Long policyId, java.time.LocalDateTime after
+    );
 }

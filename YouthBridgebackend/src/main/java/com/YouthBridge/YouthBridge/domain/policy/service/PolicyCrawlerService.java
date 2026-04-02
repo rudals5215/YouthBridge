@@ -1,5 +1,6 @@
 package com.YouthBridge.YouthBridge.domain.policy.service;
 
+import com.YouthBridge.YouthBridge.domain.admin.service.SyncStatusService;
 import com.YouthBridge.YouthBridge.domain.notification.entity.Notification;
 import com.YouthBridge.YouthBridge.domain.notification.repository.NotificationRepository;
 import com.YouthBridge.YouthBridge.domain.policy.dto.YouthPolicyCrawlerDto;
@@ -30,57 +31,36 @@ public class PolicyCrawlerService {
     private final PolicyRepository policyRepository;
     private final UserRepository userRepository;
     private final NotificationRepository notificationRepository;
+    private final SyncStatusService syncStatusService;
     private final RestTemplate restTemplate;
 
     @Value("${youth.api.key}")
     private String apiKey;
 
-    // 실제 온통청년 API 엔드포인트
     private static final String API_URL =
         "https://www.youthcenter.go.kr/go/ythip/getPlcy";
-
     private static final int PAGE_SIZE = 100;
 
-    // ── 카테고리 매핑 ─────────────────────────────────────
-    // lclsfNm(대분류) + mclsfNm(중분류) → 우리 카테고리
-    private String resolveCategory(String lclsfNm, String mclsfNm) {
-        if (lclsfNm == null) return "생활지원";
+    private static final Map<String, String> CATEGORY_MAP = Map.of(
+        "일자리",           "취업지원",
+        "주거",             "주거지원",
+        "교육·직업훈련",    "교육지원",
+        "교육･직업훈련",    "교육지원",
+        "금융·복지·문화",   "생활지원",
+        "금융･복지･문화",   "생활지원",
+        "참여·기반",        "생활지원",
+        "참여･기반",        "생활지원"
+    );
 
-        return switch (lclsfNm.trim()) {
-            case "일자리" -> {
-                if (mclsfNm != null && mclsfNm.contains("창업")) yield "창업지원";
-                yield "취업지원";
-            }
-            case "주거" -> "주거지원";
-            case "교육·직업훈련", "교육･직업훈련" -> "교육지원";
-            case "금융·복지·문화", "금융･복지･문화" -> {
-                if (mclsfNm != null && mclsfNm.contains("금융")) yield "금융지원";
-                yield "생활지원";
-            }
-            case "참여·기반", "참여･기반" -> "생활지원";
-            default -> "생활지원";
-        };
-    }
-
-    // ── 지역 매핑 ─────────────────────────────────────────
-    // rgtrHghrkInstCdNm(광역 지자체명) → region 코드
     private static final Map<String, String> REGION_NAME_MAP = Map.ofEntries(
         Map.entry("서울특별시",     "seoul"),
-        Map.entry("서울",          "seoul"),
         Map.entry("부산광역시",     "busan"),
-        Map.entry("부산",          "busan"),
         Map.entry("대구광역시",     "daegu"),
-        Map.entry("대구",          "daegu"),
         Map.entry("인천광역시",     "incheon"),
-        Map.entry("인천",          "incheon"),
         Map.entry("광주광역시",     "gwangju"),
-        Map.entry("광주",          "gwangju"),
         Map.entry("대전광역시",     "daejeon"),
-        Map.entry("대전",          "daejeon"),
         Map.entry("울산광역시",     "ulsan"),
-        Map.entry("울산",          "ulsan"),
         Map.entry("세종특별자치시", "sejong"),
-        Map.entry("세종",          "sejong"),
         Map.entry("경기도",         "gyeonggi"),
         Map.entry("강원도",         "gangwon"),
         Map.entry("강원특별자치도", "gangwon"),
@@ -91,32 +71,32 @@ public class PolicyCrawlerService {
         Map.entry("전라남도",       "jeonnam"),
         Map.entry("경상북도",       "gyeongbuk"),
         Map.entry("경상남도",       "gyeongnam"),
-        Map.entry("제주특별자치도", "jeju"),
-        Map.entry("제주",          "jeju")
+        Map.entry("제주특별자치도", "jeju")
     );
 
-    private String resolveRegion(String rgtrHghrkInstCdNm) {
-        if (rgtrHghrkInstCdNm == null || rgtrHghrkInstCdNm.isBlank()) return "all";
-        for (Map.Entry<String, String> entry : REGION_NAME_MAP.entrySet()) {
-            if (rgtrHghrkInstCdNm.contains(entry.getKey())) return entry.getValue();
-        }
-        return "all";
-    }
-
-    // ── 자동 스케줄러 — 매일 오전 6시, 오후 6시 ──────────
     @Scheduled(cron = "0 0 6,18 * * *")
     public void scheduledCrawl() {
         log.info("[Crawler] 스케줄 크롤링 시작");
         crawlAndSave();
     }
 
-    // ── 크롤링 메인 로직 ──────────────────────────────────
     @Transactional
     public void crawlAndSave() {
+        syncStatusService.start();
         log.info("[Crawler] 온통청년 API 크롤링 시작");
+
+        // ① 기존 CLOSED 정책 먼저 삭제 (이전 크롤러로 저장된 것 포함)
+        long beforeCount = policyRepository.count();
+        policyRepository.deleteByStatus(PolicyStatus.CLOSED);
+        long deletedOld = beforeCount - policyRepository.count();
+        if (deletedOld > 0) {
+            log.info("[Crawler] 기존 CLOSED 정책 {}건 정리 완료", deletedOld);
+        }
+
         int page = 1;
-        int savedCount = 0;
+        int savedCount   = 0;
         int updatedCount = 0;
+        int deletedCount = (int) deletedOld;
 
         try {
             while (true) {
@@ -126,107 +106,97 @@ public class PolicyCrawlerService {
                     + "&pageSize=" + PAGE_SIZE
                     + "&rtnType=json";
 
-                log.info("[Crawler] 요청 URL: {}", url);
+                log.info("[Crawler] 페이지 {} 요청", page);
 
                 YouthPolicyCrawlerDto response =
                     restTemplate.getForObject(url, YouthPolicyCrawlerDto.class);
 
-                if (response == null || response.getResult() == null) {
-                    log.info("[Crawler] 응답 없음. 종료");
-                    break;
-                }
-
-                if (response.getResultCode() != 200) {
-                    log.error("[Crawler] API 오류: {} - {}",
-                        response.getResultCode(), response.getResultMessage());
+                if (response == null || response.getResult() == null
+                        || response.getResultCode() != 200) {
+                    log.warn("[Crawler] 응답 이상 종료");
                     break;
                 }
 
                 List<YouthPolicyCrawlerDto.PolicyItem> items =
                     response.getResult().getYouthPolicyList();
 
-                if (items == null || items.isEmpty()) {
-                    log.info("[Crawler] 데이터 없음. 종료");
-                    break;
-                }
+                if (items == null || items.isEmpty()) break;
 
                 for (YouthPolicyCrawlerDto.PolicyItem item : items) {
                     if (item.getPlcyNo() == null) continue;
 
+                    PolicyStatus status = resolveStatus(item);
                     boolean isNew = !policyRepository.existsByExternalId(item.getPlcyNo());
 
                     if (isNew) {
+                        if (status == PolicyStatus.CLOSED) {
+                            // 이미 마감된 신규 정책은 저장하지 않음
+                            continue;
+                        }
                         Policy policy = convertToPolicy(item);
                         Policy saved = policyRepository.save(policy);
                         savedCount++;
-                        sendNotificationsToInterestedUsers(saved);
+                        sendNotifications(saved);
                     } else {
-                        policyRepository.findByExternalId(item.getPlcyNo())
-                            .ifPresent(p -> p.updateStatus(resolveStatus(item)));
-                        updatedCount++;
+                        if (status == PolicyStatus.CLOSED) {
+                            // 기존 정책이 마감됐으면 DB에서 삭제
+                            policyRepository.findByExternalId(item.getPlcyNo())
+                                .ifPresent(p -> {
+                                    policyRepository.delete(p);
+                                });
+                            deletedCount++;
+                        } else {
+                            // 활성 정책 — 상태만 업데이트
+                            policyRepository.findByExternalId(item.getPlcyNo())
+                                .ifPresent(p -> p.updateStatus(status));
+                            updatedCount++;
+                        }
                     }
                 }
 
-                // 마지막 페이지 확인
                 int totalCnt = response.getResult().getPagging().getTotCount();
-                log.info("[Crawler] 페이지 {}, 전체 {}건 중 {}건 처리",
-                    page, totalCnt, Math.min(page * PAGE_SIZE, totalCnt));
-
+                log.info("[Crawler] 페이지 {}, 전체 {}건", page, totalCnt);
                 if ((long) page * PAGE_SIZE >= totalCnt) break;
                 page++;
             }
 
-        } catch (Exception e) {
-            log.error("[Crawler] 오류 발생: {}", e.getMessage(), e);
-            throw new RuntimeException("크롤링 중 오류가 발생했어요: " + e.getMessage());
-        }
+            syncStatusService.finish(savedCount, updatedCount, deletedCount);
+            log.info("[Crawler] 완료 — 신규: {}건, 업데이트: {}건, 삭제: {}건",
+                savedCount, updatedCount, deletedCount);
 
-        log.info("[Crawler] 완료 — 신규: {}건, 업데이트: {}건", savedCount, updatedCount);
+        } catch (Exception e) {
+            log.error("[Crawler] 오류: {}", e.getMessage(), e);
+            syncStatusService.error(e.getMessage());
+            throw new RuntimeException("크롤링 중 오류: " + e.getMessage());
+        }
     }
 
-    // ── API 응답 → Policy 엔티티 변환 ────────────────────
     private Policy convertToPolicy(YouthPolicyCrawlerDto.PolicyItem item) {
         String category = resolveCategory(item.getLclsfNm(), item.getMclsfNm());
         String region   = resolveRegion(item.getRgtrHghrkInstCdNm());
-        String orgName  = item.getSprvsnInstCdNm();
-
-        // 신청 URL — aplyUrlAddr 우선, 없으면 refUrlAddr1
-        String applyUrl = (item.getAplyUrlAddr() != null && !item.getAplyUrlAddr().isBlank())
-            ? item.getAplyUrlAddr() : item.getRefUrlAddr1();
+        String applyUrl = resolveApplyUrl(item.getAplyUrlAddr(), item.getRefUrlAddr1());
 
         Policy policy = Policy.create(
             item.getPlcyNo(),
             trim(item.getPlcyNm()),
             trim(item.getPlcyExplnCn()),
-            category,
-            region
+            category, region
         );
 
-        // aplyYmd가 "20260701 ~ 20260814" 형태로 옴
         LocalDate[] dates = parseAplyYmd(item.getAplyYmd());
-        LocalDate startDate = dates[0];
-        LocalDate endDate   = dates[1];
+        LocalDate endDate = (item.getBizPrdEndYmd() != null && !item.getBizPrdEndYmd().isBlank())
+            ? parseSingleDate(item.getBizPrdEndYmd()) : dates[1];
 
-        // bizPrdEndYmd가 있으면 우선 사용
-        if (item.getBizPrdEndYmd() != null && !item.getBizPrdEndYmd().isBlank()) {
-            endDate = parseSingleDate(item.getBizPrdEndYmd());
-        }
-
-        // 나이 제한 없음(Y)이면 null 처리
         boolean noAgeLmt = "Y".equals(item.getSprtTrgtAgeLmtYn());
-        Integer minAge = noAgeLmt ? null : parseAge(item.getSprtTrgtMinAge());
-        Integer maxAge = noAgeLmt ? null : parseAge(item.getSprtTrgtMaxAge());
 
         policy.update(
             trim(item.getPlcyNm()),
             trim(item.getPlcyExplnCn()),
             buildContent(item),
-            minAge,
-            maxAge,
-            startDate,
-            endDate,
-            applyUrl,
-            orgName
+            noAgeLmt ? null : parseAge(item.getSprtTrgtMinAge()),
+            noAgeLmt ? null : parseAge(item.getSprtTrgtMaxAge()),
+            dates[0], endDate, applyUrl,
+            item.getSprvsnInstCdNm()
         );
         policy.updateStatus(resolveStatus(item));
         return policy;
@@ -234,72 +204,89 @@ public class PolicyCrawlerService {
 
     private String buildContent(YouthPolicyCrawlerDto.PolicyItem item) {
         StringBuilder sb = new StringBuilder();
-        if (item.getPlcySprtCn() != null && !item.getPlcySprtCn().isBlank())
-            sb.append("지원내용: ").append(trim(item.getPlcySprtCn())).append("\n");
-        if (item.getPlcyAplyMthdCn() != null && !item.getPlcyAplyMthdCn().isBlank())
-            sb.append("신청방법: ").append(trim(item.getPlcyAplyMthdCn()));
+        if (item.getPlcySprtCn()    != null) sb.append("지원내용: ").append(trim(item.getPlcySprtCn())).append("\n");
+        if (item.getPlcyAplyMthdCn() != null) sb.append("신청방법: ").append(trim(item.getPlcyAplyMthdCn()));
         return sb.toString().trim();
     }
 
-    // ── "20260701 ~ 20260814" → [시작일, 종료일] ─────────
-    private LocalDate[] parseAplyYmd(String aplyYmd) {
-        if (aplyYmd == null || aplyYmd.isBlank())
-            return new LocalDate[]{null, null};
-        String[] parts = aplyYmd.split("~");
-        LocalDate start = parts.length > 0 ? parseSingleDate(parts[0].trim()) : null;
-        LocalDate end   = parts.length > 1 ? parseSingleDate(parts[1].trim()) : null;
-        return new LocalDate[]{start, end};
-    }
-
-    private LocalDate parseSingleDate(String dateStr) {
-        if (dateStr == null || dateStr.isBlank()) return null;
-        String cleaned = dateStr.replaceAll("[^0-9]", "");
-        if (cleaned.length() < 8) return null;
-        try {
-            return LocalDate.parse(cleaned.substring(0, 8),
-                DateTimeFormatter.ofPattern("yyyyMMdd"));
-        } catch (Exception e) { return null; }
-    }
-
-    private Integer parseAge(String ageStr) {
-        if (ageStr == null || ageStr.isBlank()) return null;
-        try {
-            int age = Integer.parseInt(ageStr.trim());
-            return age == 0 ? null : age;
-        } catch (NumberFormatException e) { return null; }
-    }
-
-    // ── 마감일 기준 상태 결정 ─────────────────────────────
-    private PolicyStatus resolveStatus(YouthPolicyCrawlerDto.PolicyItem item) {
-        // bizPrdEndYmd 우선, 없으면 aplyYmd에서 종료일 추출
-        String endDateStr = item.getBizPrdEndYmd();
-        if (endDateStr == null || endDateStr.isBlank()) {
-            LocalDate[] dates = parseAplyYmd(item.getAplyYmd());
-            if (dates[1] != null) {
-                return dates[1].isBefore(LocalDate.now())
-                    ? PolicyStatus.CLOSED : PolicyStatus.ACTIVE;
-            }
-            return PolicyStatus.ACTIVE; // 마감일 없으면 활성
+    private String resolveCategory(String lclsfNm, String mclsfNm) {
+        if (lclsfNm == null) return "생활지원";
+        if ("일자리".equals(lclsfNm.trim())) {
+            return (mclsfNm != null && mclsfNm.contains("창업")) ? "창업지원" : "취업지원";
         }
-        LocalDate endDate = parseSingleDate(endDateStr);
+        if ("금융·복지·문화".equals(lclsfNm.trim()) || "금융･복지･문화".equals(lclsfNm.trim())) {
+            return (mclsfNm != null && mclsfNm.contains("금융")) ? "금융지원" : "생활지원";
+        }
+        return CATEGORY_MAP.getOrDefault(lclsfNm.trim(), "생활지원");
+    }
+
+    private String resolveRegion(String instNm) {
+        if (instNm == null || instNm.isBlank()) return "all";
+        for (Map.Entry<String, String> e : REGION_NAME_MAP.entrySet()) {
+            if (instNm.contains(e.getKey())) return e.getValue();
+        }
+        return "all";
+    }
+
+    private LocalDate[] parseAplyYmd(String aplyYmd) {
+        if (aplyYmd == null || aplyYmd.isBlank()) return new LocalDate[]{null, null};
+        String[] parts = aplyYmd.split("~");
+        return new LocalDate[]{
+            parts.length > 0 ? parseSingleDate(parts[0].trim()) : null,
+            parts.length > 1 ? parseSingleDate(parts[1].trim()) : null
+        };
+    }
+
+    private LocalDate parseSingleDate(String s) {
+        if (s == null || s.isBlank()) return null;
+        String cleaned = s.replaceAll("[^0-9]", "");
+        if (cleaned.length() < 8) return null;
+        try { return LocalDate.parse(cleaned.substring(0, 8), DateTimeFormatter.ofPattern("yyyyMMdd")); }
+        catch (Exception e) { return null; }
+    }
+
+    private Integer parseAge(String s) {
+        if (s == null || s.isBlank()) return null;
+        try { int v = Integer.parseInt(s.trim()); return v == 0 ? null : v; }
+        catch (NumberFormatException e) { return null; }
+    }
+
+    private PolicyStatus resolveStatus(YouthPolicyCrawlerDto.PolicyItem item) {
+        String endStr = item.getBizPrdEndYmd();
+        LocalDate endDate = (endStr != null && !endStr.isBlank())
+            ? parseSingleDate(endStr)
+            : parseAplyYmd(item.getAplyYmd())[1];
         if (endDate == null) return PolicyStatus.ACTIVE;
         return endDate.isBefore(LocalDate.now()) ? PolicyStatus.CLOSED : PolicyStatus.ACTIVE;
     }
 
-    // ── 새 정책 알림 발송 ─────────────────────────────────
-    private void sendNotificationsToInterestedUsers(Policy policy) {
+    private String resolveApplyUrl(String aplyUrl, String refUrl) {
+        if (isValidUrl(aplyUrl)) return aplyUrl;
+        if (isValidUrl(refUrl))  return refUrl;
+        return null;
+    }
+
+    private boolean isValidUrl(String url) {
+        if (url == null || url.isBlank()) return false;
+        String lower = url.toLowerCase();
+        if (lower.contains("instagram.com") || lower.contains("facebook.com") ||
+            lower.contains("youtube.com")   || lower.contains("blog.naver") ||
+            lower.contains("cafe.naver")    || lower.contains("twitter.com") ||
+            lower.contains("x.com"))        return false;
+        try {
+            String path = new java.net.URI(url).getPath();
+            return path != null && !path.equals("/") && !path.isEmpty();
+        } catch (Exception e) { return false; }
+    }
+
+    private void sendNotifications(Policy policy) {
         List<User> users = userRepository.findByInterestsContaining(policy.getCategory());
         for (User user : users) {
             notificationRepository.save(
                 Notification.create(user, "새 정책이 등록됐어요: " + policy.getTitle(), policy.getId())
             );
         }
-        if (!users.isEmpty()) {
-            log.info("[Crawler] 알림 발송: {} → {}명", policy.getTitle(), users.size());
-        }
     }
 
-    private String trim(String s) {
-        return s != null ? s.trim() : null;
-    }
+    private String trim(String s) { return s != null ? s.trim() : null; }
 }

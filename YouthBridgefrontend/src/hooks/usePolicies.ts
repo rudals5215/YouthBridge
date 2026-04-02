@@ -45,8 +45,9 @@ export function usePolicies(filters: PolicyFilters): UsePoliciesResult {
     filters.region,
     filters.age,
     filters.category,
-    filters.categories?.join(","),  // 배열은 join해서 의존성 비교
+    filters.categories?.join(","),
     filters.keyword,
+    filters.sort,
     filters.page,
   ]);
 

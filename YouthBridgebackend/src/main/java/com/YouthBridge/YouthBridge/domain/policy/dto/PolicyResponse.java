@@ -7,6 +7,7 @@ import lombok.Getter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 @Getter
 @Builder
@@ -34,7 +35,7 @@ public class PolicyResponse {
         // D-day 계산
         Long dday = null;
         if (policy.getApplyEndDate() != null) {
-            dday = (long) LocalDate.now().until(policy.getApplyEndDate()).getDays();
+             dday = ChronoUnit.DAYS.between(LocalDate.now(), policy.getApplyEndDate());
         }
 
         return PolicyResponse.builder()

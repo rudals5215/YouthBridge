@@ -32,7 +32,7 @@ public class DataInitializer implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         User admin = initAdmin();
-        initPolicies();
+//        initPolicies();
         initNotices(admin);
         initNotifications(admin);
     }
@@ -54,65 +54,65 @@ public class DataInitializer implements ApplicationRunner {
     }
 
     // ── 테스트 정책 데이터 ────────────────────────────────
-    private void initPolicies() {
-        if (policyRepository.count() > 0) {
-            log.info("정책 데이터가 이미 있어서 건너뜁니다.");
-            return;
-        }
-        log.info("테스트용 정책 데이터를 삽입합니다...");
-
-        Policy p1 = Policy.create("EXT001", "서울 청년 월세 한시 특별지원",
-                "서울 거주 청년 1인 가구 월 최대 20만원 지원", "주거지원", "seoul");
-        p1.update("서울 청년 월세 한시 특별지원",
-                "서울 거주 청년 1인 가구를 대상으로 월 최대 20만원씩 최대 12개월 월세를 지원합니다.",
-                "지원 대상: 만 19~34세 무주택 청년 1인 가구\n지원 내용: 월 최대 20만원, 12개월",
-                19, 34, LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31),
-                "https://youth.seoul.go.kr", "서울특별시");
-        p1.updateStatus(PolicyStatus.ACTIVE);
-
-        Policy p2 = Policy.create("EXT002", "청년도약계좌",
-                "매월 70만원 한도 납입 시 정부 기여금 지원, 5년 후 최대 5천만원", "금융지원", "all");
-        p2.update("청년도약계좌",
-                "매월 70만원 한도 내 자유 납입 시 정부에서 기여금을 지원합니다.",
-                "가입 대상: 만 19~34세 청년\n지원 내용: 정부기여금 월 최대 2.4만원 + 이자소득 비과세",
-                19, 34, LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31),
-                "https://www.kinfa.or.kr", "금융위원회");
-        p2.updateStatus(PolicyStatus.ACTIVE);
-
-        Policy p3 = Policy.create("EXT003", "경기도 청년 기본소득",
-                "경기도 3년 이상 거주 만 24세 청년에게 분기당 25만원 지급", "생활지원", "gyeonggi");
-        p3.update("경기도 청년 기본소득",
-                "경기도에 3년 이상 거주한 만 24세 청년에게 분기당 25만원을 지역화폐로 지급합니다.",
-                "지원 대상: 경기도 거주 만 24세 청년\n지원 내용: 연 100만원 (분기별 25만원) 지역화폐 지급",
-                24, 24, LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31),
-                "https://www.gg.go.kr", "경기도");
-        p3.updateStatus(PolicyStatus.ACTIVE);
-
-        Policy p4 = Policy.create("EXT004", "청년 내일채움공제",
-                "중소기업 취업 청년이 2년간 400만원 저축 시 최대 1,200만원 마련", "취업지원", "all");
-        p4.update("청년 내일채움공제",
-                "중소기업에 취업한 청년이 2년간 400만원을 저축하면 기업과 정부가 각각 적립합니다.",
-                "지원 대상: 만 15~34세 중소기업 취업 청년\n지원 내용: 2년 만기 시 최대 1,200만원",
-                15, 34, LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31),
-                "https://www.work.go.kr", "고용노동부");
-        p4.updateStatus(PolicyStatus.ACTIVE);
-
-        Policy p5 = Policy.create("EXT005", "부산 청년 창업 지원금",
-                "부산 청년 창업자에게 사업화 자금 최대 5,000만원 지원", "창업지원", "busan");
-        p5.update("부산 청년 창업 지원금",
-                "부산 청년 창업자에게 사업화 자금 최대 5,000만원과 창업 공간, 멘토링을 지원합니다.",
-                "지원 대상: 만 19~39세 부산 거주 예비창업자\n지원 내용: 사업화 자금 최대 5,000만원 + 창업 공간 6개월",
-                19, 39, LocalDate.of(2024, 3, 1), LocalDate.of(2024, 9, 30),
-                "https://www.busan.go.kr", "부산광역시");
-        p5.updateStatus(PolicyStatus.ACTIVE);
-
-        policyRepository.save(p1);
-        policyRepository.save(p2);
-        policyRepository.save(p3);
-        policyRepository.save(p4);
-        policyRepository.save(p5);
-        log.info("테스트 정책 {}건 삽입 완료!", policyRepository.count());
-    }
+//    private void initPolicies() {
+//        if (policyRepository.count() > 0) {
+//            log.info("정책 데이터가 이미 있어서 건너뜁니다.");
+//            return;
+//        }
+//        log.info("테스트용 정책 데이터를 삽입합니다...");
+//
+//        Policy p1 = Policy.create("EXT001", "서울 청년 월세 한시 특별지원",
+//                "서울 거주 청년 1인 가구 월 최대 20만원 지원", "주거지원", "seoul");
+//        p1.update("서울 청년 월세 한시 특별지원",
+//                "서울 거주 청년 1인 가구를 대상으로 월 최대 20만원씩 최대 12개월 월세를 지원합니다.",
+//                "지원 대상: 만 19~34세 무주택 청년 1인 가구\n지원 내용: 월 최대 20만원, 12개월",
+//                19, 34, LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31),
+//                "https://youth.seoul.go.kr", "서울특별시");
+//        p1.updateStatus(PolicyStatus.ACTIVE);
+//
+//        Policy p2 = Policy.create("EXT002", "청년도약계좌",
+//                "매월 70만원 한도 납입 시 정부 기여금 지원, 5년 후 최대 5천만원", "금융지원", "all");
+//        p2.update("청년도약계좌",
+//                "매월 70만원 한도 내 자유 납입 시 정부에서 기여금을 지원합니다.",
+//                "가입 대상: 만 19~34세 청년\n지원 내용: 정부기여금 월 최대 2.4만원 + 이자소득 비과세",
+//                19, 34, LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31),
+//                "https://www.kinfa.or.kr", "금융위원회");
+//        p2.updateStatus(PolicyStatus.ACTIVE);
+//
+//        Policy p3 = Policy.create("EXT003", "경기도 청년 기본소득",
+//                "경기도 3년 이상 거주 만 24세 청년에게 분기당 25만원 지급", "생활지원", "gyeonggi");
+//        p3.update("경기도 청년 기본소득",
+//                "경기도에 3년 이상 거주한 만 24세 청년에게 분기당 25만원을 지역화폐로 지급합니다.",
+//                "지원 대상: 경기도 거주 만 24세 청년\n지원 내용: 연 100만원 (분기별 25만원) 지역화폐 지급",
+//                24, 24, LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31),
+//                "https://www.gg.go.kr", "경기도");
+//        p3.updateStatus(PolicyStatus.ACTIVE);
+//
+//        Policy p4 = Policy.create("EXT004", "청년 내일채움공제",
+//                "중소기업 취업 청년이 2년간 400만원 저축 시 최대 1,200만원 마련", "취업지원", "all");
+//        p4.update("청년 내일채움공제",
+//                "중소기업에 취업한 청년이 2년간 400만원을 저축하면 기업과 정부가 각각 적립합니다.",
+//                "지원 대상: 만 15~34세 중소기업 취업 청년\n지원 내용: 2년 만기 시 최대 1,200만원",
+//                15, 34, LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31),
+//                "https://www.work.go.kr", "고용노동부");
+//        p4.updateStatus(PolicyStatus.ACTIVE);
+//
+//        Policy p5 = Policy.create("EXT005", "부산 청년 창업 지원금",
+//                "부산 청년 창업자에게 사업화 자금 최대 5,000만원 지원", "창업지원", "busan");
+//        p5.update("부산 청년 창업 지원금",
+//                "부산 청년 창업자에게 사업화 자금 최대 5,000만원과 창업 공간, 멘토링을 지원합니다.",
+//                "지원 대상: 만 19~39세 부산 거주 예비창업자\n지원 내용: 사업화 자금 최대 5,000만원 + 창업 공간 6개월",
+//                19, 39, LocalDate.of(2024, 3, 1), LocalDate.of(2024, 9, 30),
+//                "https://www.busan.go.kr", "부산광역시");
+//        p5.updateStatus(PolicyStatus.ACTIVE);
+//
+//        policyRepository.save(p1);
+//        policyRepository.save(p2);
+//        policyRepository.save(p3);
+//        policyRepository.save(p4);
+//        policyRepository.save(p5);
+//        log.info("테스트 정책 {}건 삽입 완료!", policyRepository.count());
+//    }
 
     // ── 공지사항 더미 데이터 ──────────────────────────────
     private void initNotices(User admin) {

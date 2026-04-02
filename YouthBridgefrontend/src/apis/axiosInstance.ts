@@ -1,7 +1,9 @@
 import axios from "axios";
 
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:8080",
+  // 개발: http://localhost:8080
+  // 배포: VITE_API_URL 환경변수 사용
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8080",
   timeout: 10000,
   headers: { "Content-Type": "application/json" },
 });

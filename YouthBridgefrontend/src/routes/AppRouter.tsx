@@ -11,6 +11,8 @@ import Signup from "../pages/Signup";
 import MyPage from "../pages/MyPage";
 import AdminPage from "../pages/AdminPage";
 import NoticePage from "../pages/NoticePage";
+import AboutPage from "../pages/AboutPage";
+import ContactPage from "../pages/ContactPage";
 import KakaoCallback from "../pages/KakaoCallback";
 import NotFound from "../pages/NotFound";
 
@@ -19,7 +21,6 @@ function AppRouter() {
     <BrowserRouter>
       <Navbar />
       <Routes>
-        {/* 누구나 접근 가능 */}
         <Route path="/"             element={<Home />} />
         <Route path="/policies"     element={<PolicyList />} />
         <Route path="/policies/:id" element={<PolicyDetail />} />
@@ -27,22 +28,16 @@ function AppRouter() {
         <Route path="/login"        element={<Login />} />
         <Route path="/signup"       element={<Signup />} />
         <Route path="/notices"      element={<NoticePage />} />
+        <Route path="/about"        element={<AboutPage />} />
+        <Route path="/contact"      element={<ContactPage />} />
         <Route path="/oauth/kakao"  element={<KakaoCallback />} />
 
-        {/* 로그인 필요 */}
         <Route path="/mypage" element={
-          <ProtectedRoute>
-            <MyPage />
-          </ProtectedRoute>
+          <ProtectedRoute><MyPage /></ProtectedRoute>
         } />
-
-        {/* 관리자만 접근 가능 */}
         <Route path="/admin" element={
-          <ProtectedRoute requiredRole="ADMIN">
-            <AdminPage />
-          </ProtectedRoute>
+          <ProtectedRoute requiredRole="ADMIN"><AdminPage /></ProtectedRoute>
         } />
-
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>

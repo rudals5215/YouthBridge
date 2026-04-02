@@ -120,12 +120,13 @@ function Home() {
     navigate(`/policies?${params.toString()}`);
   };
 
-  // 지역별 정책 수 상위 4개
-  const topRegions = stats
-    ? Object.entries(stats.regionCount)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 4)
-    : [];
+  // 지역별 정책 — 서울, 경기, 부산, 인천 고정
+  const FIXED_REGIONS = [
+    { value: "seoul", label: "서울" },
+    { value: "gyeonggi", label: "경기" },
+    { value: "busan", label: "부산" },
+    { value: "incheon", label: "인천" },
+  ];
 
   return (
     <div className="home-container">
@@ -509,61 +510,34 @@ function Home() {
             </Link>
           </div>
           <div className="region-grid">
-            {topRegions.length > 0
-              ? topRegions.map(([regionValue, count]) => (
-                  <Link
-                    key={regionValue}
-                    to={`/policies?region=${regionValue}`}
-                    className="region-card"
-                  >
-                    {REGION_IMAGES[regionValue] && (
-                      <img
-                        src={REGION_IMAGES[regionValue]}
-                        alt={getRegionLabel(regionValue)}
-                        className="region-card-img"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = "none";
-                        }}
-                      />
-                    )}
-                    <div className="region-card-overlay" />
-                    <div className="region-card-body">
-                      <span className="region-card-name">
-                        {getRegionLabel(regionValue)}
-                      </span>
-                      <span className="region-card-count">{count}개</span>
-                    </div>
-                  </Link>
-                ))
-              : // 더미 데이터 fallback (API 호출 전)
-                [
-                  { label: "서울", value: "seoul" },
-                  { label: "경기", value: "gyeonggi" },
-                  { label: "부산", value: "busan" },
-                  { label: "인천", value: "incheon" },
-                ].map((r) => (
-                  <Link
-                    key={r.value}
-                    to={`/policies?region=${r.value}`}
-                    className="region-card"
-                  >
-                    {REGION_IMAGES[r.value] && (
-                      <img
-                        src={REGION_IMAGES[r.value]}
-                        alt={r.label}
-                        className="region-card-img"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = "none";
-                        }}
-                      />
-                    )}
-                    <div className="region-card-overlay" />
-                    <div className="region-card-body">
-                      <span className="region-card-name">{r.label}</span>
-                      <span className="region-card-count">—</span>
-                    </div>
-                  </Link>
-                ))}
+            {FIXED_REGIONS.map((r) => {
+              const count = stats?.regionCount?.[r.value];
+              return (
+                <Link
+                  key={r.value}
+                  to={`/policies?region=${r.value}`}
+                  className="region-card"
+                >
+                  {REGION_IMAGES[r.value] && (
+                    <img
+                      src={REGION_IMAGES[r.value]}
+                      alt={r.label}
+                      className="region-card-img"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                  )}
+                  <div className="region-card-overlay" />
+                  <div className="region-card-body">
+                    <span className="region-card-name">{r.label}</span>
+                    <span className="region-card-count">
+                      {count ? `${count}개` : "—"}
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -646,7 +620,7 @@ function Home() {
                   <Link to="/notices">공지사항</Link>
                 </li>
                 <li>
-                  <a href="mailto:support@youthbridge.com">문의하기</a>
+                  <Link to="/contact">문의하기</Link>
                 </li>
               </ul>
             </div>
@@ -654,7 +628,7 @@ function Home() {
               <h4>회사정보</h4>
               <ul>
                 <li>
-                  <Link to="/notices">서비스 소개</Link>
+                  <Link to="/about">서비스 소개</Link>
                 </li>
                 <li>
                   <span

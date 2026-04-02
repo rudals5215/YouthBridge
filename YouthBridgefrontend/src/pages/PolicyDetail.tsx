@@ -136,6 +136,39 @@ function PolicyDetail() {
     icon: "ri-file-list-line",
   };
 
+  // ── CLOSED 정책 차단 화면 ─────────────────────────────
+  if (policy.status === "CLOSED" || policy.expired) {
+    return (
+      <div className="policy-detail-page">
+        <div className="detail-container">
+          <Link to="/policies" className="back-link">
+            <i className="ri-arrow-left-line" /> 목록으로
+          </Link>
+          <div className="detail-closed-banner">
+            <div className="closed-icon">
+              <i className="ri-time-line" />
+            </div>
+            <h2>마감된 공고예요</h2>
+            <p>
+              <strong>{policy.title}</strong>의 신청 기간이 종료됐어요.
+            </p>
+            {policy.applyEndDate && (
+              <p className="closed-date">마감일: {policy.applyEndDate}</p>
+            )}
+            <div className="closed-actions">
+              <Link to="/policies" className="btn-go-list">
+                <i className="ri-search-line" /> 다른 정책 찾기
+              </Link>
+              <Link to="/recommend" className="btn-go-recommend">
+                <i className="ri-magic-line" /> 맞춤 정책 추천받기
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="policy-detail-page">
       <div className="detail-container">
@@ -249,7 +282,7 @@ function PolicyDetail() {
             </a>
           ) : (
             <button className="btn-apply disabled" disabled>
-              신청 링크 준비 중
+              <i className="ri-information-line" /> 별도 신청 없음 (기관 문의)
             </button>
           )}
         </footer>

@@ -5,6 +5,7 @@ import com.YouthBridge.YouthBridge.domain.policy.entity.PolicyStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -16,7 +17,7 @@ public interface PolicyRepository extends JpaRepository<Policy, Long> {
     boolean existsByExternalId(String externalId);
     Optional<Policy> findByExternalId(String externalId);
 
-    // 카테고리 단일 필터 (기존)
+    // ORDER BY는 Pageable의 Sort로 처리 (동적 정렬)
     @Query("""
         SELECT p FROM Policy p
         WHERE (:region IS NULL OR p.region = :region OR p.region = 'all')
@@ -25,9 +26,12 @@ public interface PolicyRepository extends JpaRepository<Policy, Long> {
             (p.minAge IS NULL OR p.minAge <= :age) AND
             (p.maxAge IS NULL OR p.maxAge >= :age)
         ))
-        AND (:keyword IS NULL OR p.title LIKE %:keyword% OR p.description LIKE %:keyword%)
+        AND (
+            :keyword IS NULL OR
+            p.title LIKE CONCAT('%', :keyword, '%') OR
+            p.description LIKE CONCAT('%', :keyword, '%')
+        )
         AND (:status IS NULL OR p.status = :status)
-        ORDER BY p.createdAt DESC
     """)
     Page<Policy> findByFilters(
         @Param("region")   String region,
@@ -38,8 +42,6 @@ public interface PolicyRepository extends JpaRepository<Policy, Long> {
         Pageable pageable
     );
 
-    // 카테고리 다중 필터 — IN 쿼리 (중복 선택 지원)
-    // categories가 비어있으면 전체 조회
     @Query("""
         SELECT p FROM Policy p
         WHERE (:region IS NULL OR p.region = :region OR p.region = 'all')
@@ -48,9 +50,12 @@ public interface PolicyRepository extends JpaRepository<Policy, Long> {
             (p.minAge IS NULL OR p.minAge <= :age) AND
             (p.maxAge IS NULL OR p.maxAge >= :age)
         ))
-        AND (:keyword IS NULL OR p.title LIKE %:keyword% OR p.description LIKE %:keyword%)
+        AND (
+            :keyword IS NULL OR
+            p.title LIKE CONCAT('%', :keyword, '%') OR
+            p.description LIKE CONCAT('%', :keyword, '%')
+        )
         AND (:status IS NULL OR p.status = :status)
-        ORDER BY p.createdAt DESC
     """)
     Page<Policy> findByFiltersMultiCategory(
         @Param("region")     String region,
@@ -62,6 +67,11 @@ public interface PolicyRepository extends JpaRepository<Policy, Long> {
     );
 
     long countByStatus(PolicyStatus status);
+
+    // CLOSED 정책 일괄 삭제 (동기화 시 정리용)
+    @Modifying
+    @Query("DELETE FROM Policy p WHERE p.status = :status")
+    void deleteByStatus(@Param("status") PolicyStatus status);
 
     @Query("SELECT p.category, COUNT(p) FROM Policy p GROUP BY p.category")
     List<Object[]> countByCategory();

@@ -1,10 +1,13 @@
 package com.YouthBridge.YouthBridge.global.config;
 
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-// @EnableScheduling — 이게 있어야 @Scheduled 어노테이션이 동작해요
+// @EnableScheduling — @Scheduled 어노테이션 활성화
+// @EnableAsync       — @Async 어노테이션 활성화
 @Configuration
 @EnableScheduling
+@EnableAsync
 public class SchedulingConfig {
 }
