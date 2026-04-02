@@ -8,7 +8,8 @@ interface UserInfo {
   email: string;
   name: string;
   region: string;
-  role: string;
+  role: string;       // "USER" or "ADMIN"
+  provider?: string;  // 소셜 로그인 제공자 (kakao 등, 일반 로그인은 undefined)
 }
 
 // 스토어 타입 정의
@@ -36,16 +37,14 @@ export const useAuthStore = create<AuthStore>()(
       isLoggedIn: false,
 
       setAuth: (response: AuthResponse) => {
-        // 토큰을 localStorage에도 저장 (axiosInstance에서 읽어서 씀)
         localStorage.setItem("accessToken", response.accessToken);
-
         set({
           user: {
             userId: response.userId,
             email: response.email,
             name: response.name,
             region: response.region,
-            role: response.role ?? "USER", // ← 백엔드에서 받은 role 사용
+            role: response.role ?? "USER",  // role 없으면 USER 기본값
           },
           accessToken: response.accessToken,
           isLoggedIn: true,
