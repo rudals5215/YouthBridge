@@ -1,19 +1,59 @@
 import { Link, useSearchParams } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { REGIONS, getRegionLabel } from "../constants/regions";
+import { REGIONS, getRegionLabel } from "../constants/Regions";
 import { usePolicies } from "../hooks/usePolicies";
 import PolicyCardSkeleton from "../components/PolicyCardSkeleton";
 import "./PolicyList.css";
 
 const CATEGORIES = [
-  { key: "취업지원", icon: "ri-briefcase-line",     bg: "var(--cat-job-bg)",     color: "var(--cat-job-color)" },
-  { key: "주거지원", icon: "ri-home-4-line",         bg: "var(--cat-housing-bg)", color: "var(--cat-housing-color)" },
-  { key: "창업지원", icon: "ri-rocket-line",         bg: "var(--cat-startup-bg)", color: "var(--cat-startup-color)" },
-  { key: "교육지원", icon: "ri-graduation-cap-line", bg: "var(--cat-edu-bg)",     color: "var(--cat-edu-color)" },
-  { key: "생활지원", icon: "ri-heart-line",          bg: "var(--cat-life-bg)",    color: "var(--cat-life-color)" },
-  { key: "문화지원", icon: "ri-palette-line",        bg: "var(--cat-culture-bg)", color: "var(--cat-culture-color)" },
-  { key: "금융지원", icon: "ri-bank-line",           bg: "var(--cat-finance-bg)", color: "var(--cat-finance-color)" },
-  { key: "건강지원", icon: "ri-heart-pulse-line",    bg: "var(--cat-health-bg)",  color: "var(--cat-health-color)" },
+  {
+    key: "취업지원",
+    icon: "ri-briefcase-line",
+    bg: "var(--cat-job-bg)",
+    color: "var(--cat-job-color)",
+  },
+  {
+    key: "주거지원",
+    icon: "ri-home-4-line",
+    bg: "var(--cat-housing-bg)",
+    color: "var(--cat-housing-color)",
+  },
+  {
+    key: "창업지원",
+    icon: "ri-rocket-line",
+    bg: "var(--cat-startup-bg)",
+    color: "var(--cat-startup-color)",
+  },
+  {
+    key: "교육지원",
+    icon: "ri-graduation-cap-line",
+    bg: "var(--cat-edu-bg)",
+    color: "var(--cat-edu-color)",
+  },
+  {
+    key: "생활지원",
+    icon: "ri-heart-line",
+    bg: "var(--cat-life-bg)",
+    color: "var(--cat-life-color)",
+  },
+  {
+    key: "문화지원",
+    icon: "ri-palette-line",
+    bg: "var(--cat-culture-bg)",
+    color: "var(--cat-culture-color)",
+  },
+  {
+    key: "금융지원",
+    icon: "ri-bank-line",
+    bg: "var(--cat-finance-bg)",
+    color: "var(--cat-finance-color)",
+  },
+  {
+    key: "건강지원",
+    icon: "ri-heart-pulse-line",
+    bg: "var(--cat-health-bg)",
+    color: "var(--cat-health-color)",
+  },
 ];
 
 function getPageNumbers(current: number, total: number): (number | "...")[] {
@@ -21,7 +61,11 @@ function getPageNumbers(current: number, total: number): (number | "...")[] {
   const pages: (number | "...")[] = [];
   const delta = 2;
   for (let i = 1; i <= total; i++) {
-    if (i === 1 || i === total || (i >= current - delta && i <= current + delta)) {
+    if (
+      i === 1 ||
+      i === total ||
+      (i >= current - delta && i <= current + delta)
+    ) {
       pages.push(i);
     } else if (pages[pages.length - 1] !== "...") {
       pages.push("...");
@@ -32,30 +76,38 @@ function getPageNumbers(current: number, total: number): (number | "...")[] {
 
 function PolicyList() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const regionParam   = searchParams.get("region")    ?? "";
-  const ageParam      = searchParams.get("age")        ?? "";
-  const categoryParam = searchParams.get("category")   ?? "";
-  const keywordParam  = searchParams.get("keyword")    ?? "";
+  const regionParam = searchParams.get("region") ?? "";
+  const ageParam = searchParams.get("age") ?? "";
+  const categoryParam = searchParams.get("category") ?? "";
+  const keywordParam = searchParams.get("keyword") ?? "";
 
-  const [keyword, setKeyword]           = useState(keywordParam);
+  const [keyword, setKeyword] = useState(keywordParam);
   const [selectedRegion, setSelectedRegion] = useState(regionParam);
-  const [selectedAge, setSelectedAge]   = useState(ageParam);
+  const [selectedAge, setSelectedAge] = useState(ageParam);
   // 카테고리 중복 선택 — string[] 로 변경
   const [selectedCats, setSelectedCats] = useState<string[]>(
-    categoryParam ? categoryParam.split(",").filter(Boolean) : []
+    categoryParam ? categoryParam.split(",").filter(Boolean) : [],
   );
-  const [sortBy, setSortBy]             = useState("latest");
-  const [currentPage, setCurrentPage]   = useState(1);
+  const [sortBy, setSortBy] = useState("latest");
+  const [currentPage, setCurrentPage] = useState(1);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => { setSelectedRegion(regionParam); }, [regionParam]);
-  useEffect(() => { setKeyword(keywordParam); }, [keywordParam]);
   useEffect(() => {
-    setSelectedCats(categoryParam ? categoryParam.split(",").filter(Boolean) : []);
+    setSelectedRegion(regionParam);
+  }, [regionParam]);
+  useEffect(() => {
+    setKeyword(keywordParam);
+  }, [keywordParam]);
+  useEffect(() => {
+    setSelectedCats(
+      categoryParam ? categoryParam.split(",").filter(Boolean) : [],
+    );
   }, [categoryParam]);
 
   // 필터 바뀌면 1페이지 리셋
-  useEffect(() => { setCurrentPage(1); }, [selectedRegion, selectedAge, selectedCats.join(","), keyword]);
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedRegion, selectedAge, selectedCats.join(","), keyword]);
 
   const updateParam = (key: string, value: string) => {
     const next = new URLSearchParams(searchParams);
@@ -95,17 +147,21 @@ function PolicyList() {
   };
 
   const resetFilters = () => {
-    setKeyword(""); setSelectedRegion(""); setSelectedAge(""); setSelectedCats([]);
+    setKeyword("");
+    setSelectedRegion("");
+    setSelectedAge("");
+    setSelectedCats([]);
     setSearchParams(new URLSearchParams());
   };
 
   const { policies, isLoading, error, totalPages, total } = usePolicies({
-    region:     selectedRegion || undefined,
-    age:        selectedAge ? parseInt(selectedAge) : undefined,
-    categories: selectedCats.length > 0 ? selectedCats : undefined, // 다중 카테고리
-    keyword:    keyword      || undefined,
-    page:       currentPage - 1,
-    size:       10,
+    region: selectedRegion || undefined,
+    age: selectedAge ? parseInt(selectedAge) : undefined,
+    categories: selectedCats.length > 0 ? selectedCats : undefined,
+    keyword: keyword || undefined,
+    sort: sortBy as "latest" | "deadline" | "name",
+    page: currentPage - 1,
+    size: 10,
   });
 
   const pageNumbers = getPageNumbers(currentPage, totalPages);
@@ -118,12 +174,13 @@ function PolicyList() {
 
   const getCatMeta = (cat: string) =>
     CATEGORIES.find((c) => c.key === cat) ?? {
-      bg: "var(--gray-100)", color: "var(--gray-500)", icon: "ri-file-list-line"
+      bg: "var(--gray-100)",
+      color: "var(--gray-500)",
+      icon: "ri-file-list-line",
     };
 
   return (
     <div className="pl-page">
-
       {/* 헤더 */}
       <div className="pl-header">
         <div className="pl-header-inner">
@@ -133,7 +190,10 @@ function PolicyList() {
           </p>
           <form
             className="pl-search-bar"
-            onSubmit={(e) => { e.preventDefault(); updateParam("keyword", keyword); }}
+            onSubmit={(e) => {
+              e.preventDefault();
+              updateParam("keyword", keyword);
+            }}
           >
             <div className="pl-search-input-wrap">
               <i className="ri-search-line" />
@@ -144,7 +204,9 @@ function PolicyList() {
                 onChange={handleKeyword}
               />
             </div>
-            <button type="submit" className="pl-search-btn">검색</button>
+            <button type="submit" className="pl-search-btn">
+              검색
+            </button>
           </form>
         </div>
       </div>
@@ -152,7 +214,6 @@ function PolicyList() {
       {/* 본문 */}
       <div className="pl-body">
         <div className="pl-body-inner">
-
           {/* 사이드바 */}
           <aside className="pl-sidebar">
             <div className="pl-filter-card">
@@ -161,7 +222,9 @@ function PolicyList() {
                   <i className="ri-equalizer-line" /> 상세 필터
                 </span>
                 {activeFilterCount > 0 && (
-                  <button className="pl-filter-reset" onClick={resetFilters}>초기화</button>
+                  <button className="pl-filter-reset" onClick={resetFilters}>
+                    초기화
+                  </button>
                 )}
               </div>
 
@@ -174,7 +237,9 @@ function PolicyList() {
                   <select value={selectedRegion} onChange={handleRegionChange}>
                     <option value="">전체</option>
                     {REGIONS.filter((r) => r.value !== "").map((r) => (
-                      <option key={r.value} value={r.value}>{r.label}</option>
+                      <option key={r.value} value={r.value}>
+                        {r.label}
+                      </option>
                     ))}
                   </select>
                   <i className="ri-arrow-down-s-line" />
@@ -184,23 +249,35 @@ function PolicyList() {
               {/* 연령 입력 */}
               <div className="pl-filter-group">
                 <label className="pl-filter-group-title">
-                  <i className="ri-user-line" /> 연령 <span className="pl-filter-hint">(만 나이)</span>
+                  <i className="ri-user-line" /> 연령{" "}
+                  <span className="pl-filter-hint">(만 나이)</span>
                 </label>
                 <div className="pl-age-input-wrap">
                   <input
                     type="number"
                     className={`pl-age-input ${selectedAge && (parseInt(selectedAge) < 1 || parseInt(selectedAge) > 100) ? "error" : ""}`}
                     placeholder="예) 27"
-                    min={1} max={100}
+                    min={1}
+                    max={100}
                     value={selectedAge}
                     onChange={handleAgeChange}
                   />
                   {selectedAge && (
-                    <button className="pl-age-clear" onClick={() => { setSelectedAge(""); updateParam("age", ""); }}>✕</button>
+                    <button
+                      className="pl-age-clear"
+                      onClick={() => {
+                        setSelectedAge("");
+                        updateParam("age", "");
+                      }}
+                    >
+                      ✕
+                    </button>
                   )}
                 </div>
                 {selectedAge && !isNaN(parseInt(selectedAge)) && (
-                  <p className="pl-age-hint">만 {selectedAge}세 기준으로 필터링</p>
+                  <p className="pl-age-hint">
+                    만 {selectedAge}세 기준으로 필터링
+                  </p>
                 )}
               </div>
 
@@ -209,10 +286,17 @@ function PolicyList() {
                 <div className="pl-filter-group-title">
                   <i className="ri-price-tag-3-line" /> 카테고리
                   {selectedCats.length > 0 && (
-                    <span className="pl-cat-count-badge">{selectedCats.length}</span>
+                    <span className="pl-cat-count-badge">
+                      {selectedCats.length}
+                    </span>
                   )}
                 </div>
-                <p className="pl-filter-hint" style={{ marginBottom: "0.5rem" }}>복수 선택 가능</p>
+                <p
+                  className="pl-filter-hint"
+                  style={{ marginBottom: "0.5rem" }}
+                >
+                  복수 선택 가능
+                </p>
                 <div className="pl-cat-list">
                   {CATEGORIES.map((cat) => {
                     const isSelected = selectedCats.includes(cat.key);
@@ -221,15 +305,29 @@ function PolicyList() {
                         key={cat.key}
                         className={`pl-cat-btn ${isSelected ? "active" : ""}`}
                         onClick={() => handleCat(cat.key)}
-                        style={isSelected
-                          ? { background: cat.bg, color: cat.color, borderColor: cat.color }
-                          : {}}
+                        style={
+                          isSelected
+                            ? {
+                                background: cat.bg,
+                                color: cat.color,
+                                borderColor: cat.color,
+                              }
+                            : {}
+                        }
                       >
-                        <span className="pl-cat-icon" style={{ background: cat.bg, color: cat.color }}>
+                        <span
+                          className="pl-cat-icon"
+                          style={{ background: cat.bg, color: cat.color }}
+                        >
                           <i className={cat.icon} />
                         </span>
                         <span>{cat.key}</span>
-                        {isSelected && <i className="ri-check-line" style={{ marginLeft: "auto", fontSize: "0.75rem" }} />}
+                        {isSelected && (
+                          <i
+                            className="ri-check-line"
+                            style={{ marginLeft: "auto", fontSize: "0.75rem" }}
+                          />
+                        )}
                       </button>
                     );
                   })}
@@ -244,11 +342,16 @@ function PolicyList() {
               <div className="pl-main-count">
                 <strong>{total}개</strong> 정책
                 {activeFilterCount > 0 && (
-                  <span className="pl-active-badge">{activeFilterCount}개 필터 적용</span>
+                  <span className="pl-active-badge">
+                    {activeFilterCount}개 필터 적용
+                  </span>
                 )}
               </div>
               <div className="pl-sort-wrap">
-                <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                >
                   <option value="latest">최신순</option>
                   <option value="deadline">마감임박순</option>
                   <option value="name">이름순</option>
@@ -264,34 +367,54 @@ function PolicyList() {
                 <div className="pl-empty">
                   <i className="ri-error-warning-line" />
                   <p>{error}</p>
-                  <button onClick={() => window.location.reload()}>다시 시도</button>
+                  <button onClick={() => window.location.reload()}>
+                    다시 시도
+                  </button>
                 </div>
               ) : policies.length > 0 ? (
                 policies.map((policy) => {
                   const meta = getCatMeta(policy.category);
                   return (
-                    <Link key={policy.id} to={`/policies/${policy.id}`} className="pl-card">
-                      <div className="pl-card-left" style={{ background: meta.bg }}>
-                        <div className="pl-card-icon" style={{ background: `${meta.color}20`, color: meta.color }}>
+                    <Link
+                      key={policy.id}
+                      to={`/policies/${policy.id}`}
+                      className="pl-card"
+                    >
+                      <div
+                        className="pl-card-left"
+                        style={{ background: meta.bg }}
+                      >
+                        <div
+                          className="pl-card-icon"
+                          style={{
+                            background: `${meta.color}20`,
+                            color: meta.color,
+                          }}
+                        >
                           <i className={meta.icon} />
                         </div>
                       </div>
                       <div className="pl-card-body">
                         <div className="pl-card-top-row">
                           <h3 className="pl-card-title">{policy.title}</h3>
-                          {policy.dday !== null && policy.dday !== undefined && (
-                            <span className="pl-card-dday">
-                              <i className="ri-time-line" /> D-{policy.dday}
-                            </span>
-                          )}
+                          {policy.dday !== null &&
+                            policy.dday !== undefined && (
+                              <span className="pl-card-dday">
+                                <i className="ri-time-line" /> D-{policy.dday}
+                              </span>
+                            )}
                         </div>
                         <p className="pl-card-desc">{policy.description}</p>
                         <div className="pl-card-tags">
-                          <span className="pl-tag-cat" style={{ color: meta.color, background: meta.bg }}>
+                          <span
+                            className="pl-tag-cat"
+                            style={{ color: meta.color, background: meta.bg }}
+                          >
                             {policy.category}
                           </span>
                           <span className="pl-tag-region">
-                            <i className="ri-map-pin-line" /> {getRegionLabel(policy.region)}
+                            <i className="ri-map-pin-line" />{" "}
+                            {getRegionLabel(policy.region)}
                           </span>
                           {(policy.minAge || policy.maxAge) && (
                             <span className="pl-tag-age">
@@ -318,25 +441,53 @@ function PolicyList() {
             {/* 페이지네이션 */}
             {totalPages > 1 && (
               <div className="pl-pagination">
-                <button className="pl-page-btn pl-page-arrow" onClick={() => setCurrentPage(1)} disabled={currentPage === 1} title="처음">
+                <button
+                  className="pl-page-btn pl-page-arrow"
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                  title="처음"
+                >
                   <i className="ri-skip-left-line" />
                 </button>
-                <button className="pl-page-btn pl-page-arrow" onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1} title="이전">
+                <button
+                  className="pl-page-btn pl-page-arrow"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  title="이전"
+                >
                   <i className="ri-arrow-left-s-line" />
                 </button>
                 {pageNumbers.map((p, i) =>
                   p === "..." ? (
-                    <span key={`e-${i}`} className="pl-page-ellipsis">...</span>
+                    <span key={`e-${i}`} className="pl-page-ellipsis">
+                      ...
+                    </span>
                   ) : (
-                    <button key={p} className={`pl-page-btn ${currentPage === p ? "active" : ""}`} onClick={() => setCurrentPage(p)}>
+                    <button
+                      key={p}
+                      className={`pl-page-btn ${currentPage === p ? "active" : ""}`}
+                      onClick={() => setCurrentPage(p)}
+                    >
                       {p}
                     </button>
-                  )
+                  ),
                 )}
-                <button className="pl-page-btn pl-page-arrow" onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} title="다음">
+                <button
+                  className="pl-page-btn pl-page-arrow"
+                  onClick={() =>
+                    setCurrentPage((p) => Math.min(totalPages, p + 1))
+                  }
+                  disabled={currentPage === totalPages}
+                  title="다음"
+                >
                   <i className="ri-arrow-right-s-line" />
                 </button>
-                <button className="pl-page-btn pl-page-arrow" onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} title="마지막">
+                <button
+                  className="pl-page-btn pl-page-arrow"
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={currentPage === totalPages}
+                  title="마지막"
+                >
                   <i className="ri-skip-right-line" />
                 </button>
               </div>

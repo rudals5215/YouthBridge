@@ -32,10 +32,11 @@ export interface PolicyListResponse {
 export interface PolicyFilters {
   region?: string;
   age?: number;
-  category?: string;       // 단일 카테고리 (기존 호환)
-  categories?: string[];   // 다중 카테고리 (중복 선택)
+  category?: string;
+  categories?: string[];
   keyword?: string;
   status?: string;
+  sort?: "latest" | "deadline" | "name";
   page?: number;
   size?: number;
 }
@@ -48,13 +49,15 @@ export const fetchPolicies = async (
 ): Promise<PolicyListResponse> => {
   const { categories, ...rest } = filters;
 
-  // undefined/빈 값 제거
   const params = new URLSearchParams();
+
+  // status 기본값 ACTIVE (마감 정책은 기본 제외)
+  if (!rest.status) rest.status = "ACTIVE";
+
   Object.entries(rest).forEach(([k, v]) => {
     if (v !== undefined && v !== "") params.append(k, String(v));
   });
 
-  // categories 배열 → ?categories=취업지원&categories=주거지원
   if (categories && categories.length > 0) {
     categories.forEach((c) => params.append("categories", c));
   }

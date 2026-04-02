@@ -4,6 +4,7 @@ import com.YouthBridge.YouthBridge.domain.policy.dto.PolicyListRequest;
 import com.YouthBridge.YouthBridge.domain.policy.dto.PolicyListResponse;
 import com.YouthBridge.YouthBridge.domain.policy.dto.PolicyResponse;
 import com.YouthBridge.YouthBridge.domain.policy.entity.Policy;
+import com.YouthBridge.YouthBridge.domain.policy.entity.PolicyStatus;
 import com.YouthBridge.YouthBridge.domain.policy.repository.PolicyRepository;
 import com.YouthBridge.YouthBridge.global.exception.CustomException;
 import com.YouthBridge.YouthBridge.global.exception.ErrorCode;
@@ -25,33 +26,45 @@ public class PolicyService {
     private final PolicyRepository policyRepository;
 
     public PolicyListResponse getPolicies(PolicyListRequest request) {
-        Pageable pageable = PageRequest.of(
-                request.getPage(),
-                request.getSize(),
-                Sort.by(Sort.Direction.DESC, "createdAt")
-        );
+
+        // status String → PolicyStatus enum 변환
+        PolicyStatus statusEnum = null;
+        if (request.getStatus() != null && !request.getStatus().isBlank()) {
+            try {
+                statusEnum = PolicyStatus.valueOf(request.getStatus().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                statusEnum = null; // 잘못된 값이면 전체 조회
+            }
+        }
+
+        // ── 정렬 기준 변환 ────────────────────────────────
+        Sort sort = switch (request.getSort() != null ? request.getSort() : "latest") {
+            case "deadline" -> Sort.by(Sort.Order.asc("applyEndDate").nullsLast());
+            case "name"     -> Sort.by(Sort.Direction.ASC, "title");
+            default         -> Sort.by(Sort.Order.desc("createdAt"),Sort.Order.asc("applyEndDate").nullsLast()); // latest
+        };
+
+        Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
 
         Page<Policy> policyPage;
-
-        // categories 리스트가 있으면 다중 카테고리 IN 쿼리 사용
         List<String> categories = request.getCategories();
+
         if (categories != null && !categories.isEmpty()) {
             policyPage = policyRepository.findByFiltersMultiCategory(
                     request.getRegion(),
                     categories,
                     request.getAge(),
                     request.getKeyword(),
-                    request.getStatus(),
+                    statusEnum,
                     pageable
             );
         } else {
-            // 단일 카테고리 또는 전체 조회
             policyPage = policyRepository.findByFilters(
                     request.getRegion(),
                     request.getCategory(),
                     request.getAge(),
                     request.getKeyword(),
-                    request.getStatus(),
+                    statusEnum,
                     pageable
             );
         }

@@ -21,7 +21,7 @@ export interface AuthResponse {
   email: string;
   name: string;
   region: string;
-  role: string;
+  role: string;       // "USER" or "ADMIN"
 }
 
 // ── API 함수 ──────────────────────────────────────────
@@ -46,8 +46,8 @@ export const kakaoLogin = async (code: string): Promise<AuthResponse> => {
 
 // 카카오 로그인 페이지로 리다이렉트
 export const redirectToKakao = () => {
-  const KAKAO_CLIENT_ID = "2a20189772741d8f70c47c384207ec5b";
-  const REDIRECT_URI = "http://localhost:5173/oauth/kakao";
+  const KAKAO_CLIENT_ID = import.meta.env.VITE_KAKAO_CLIENT_ID || "2a20189772741d8f70c47c384207ec5b";
+  const REDIRECT_URI    = import.meta.env.VITE_KAKAO_REDIRECT_URI || "http://localhost:5173/oauth/kakao";
   const kakaoAuthUrl =
     `https://kauth.kakao.com/oauth/authorize` +
     `?client_id=${KAKAO_CLIENT_ID}` +

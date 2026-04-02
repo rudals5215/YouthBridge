@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
-import { getAdminStats, getAdminUsers, deletePolicy, syncPublicApi } from "../apis/adminApi";
+import { getAdminStats, getAdminUsers, deletePolicy, syncPublicApi, getSyncStatus } from "../apis/adminApi";
 import { createNotice, deleteNotice, fetchNotices } from "../apis/noticeApi";
-import type { AdminStats, AdminUser } from "../apis/adminApi";
+import type { AdminStats, AdminUser, SyncStatus } from "../apis/adminApi";
 import type { NoticeItem } from "../apis/noticeApi";
 import "./AdminPage.css";
 
@@ -70,29 +70,50 @@ function AdminPage() {
 
 // ── 대시보드 탭 ────────────────────────────────────────
 function DashboardTab() {
-  const [stats, setStats] = useState<AdminStats | null>(null);
+  const { user } = useAuthStore();
+  const [stats, setStats]       = useState<AdminStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [syncing, setSyncing] = useState(false);
-  const [syncMsg, setSyncMsg] = useState("");
+  const [syncing, setSyncing]   = useState(false);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    getAdminStats()
-      .then(setStats)
-      .catch(() => {})
-      .finally(() => setIsLoading(false));
-  }, []);
+    if (user?.role !== "ADMIN") return;
+    getAdminStats().then(setStats).catch(() => {}).finally(() => setIsLoading(false));
+    // 초기 동기화 상태도 확인
+    getSyncStatus().then(setSyncStatus).catch(() => {});
+  }, [user]);
+
+  // 동기화 진행 중이면 2초마다 폴링
+  const startPolling = () => {
+    if (pollRef.current) return;
+    pollRef.current = setInterval(async () => {
+      try {
+        const status = await getSyncStatus();
+        setSyncStatus(status);
+        if (!status.running) {
+          stopPolling();
+          setSyncing(false);
+          // 통계 새로고침
+          getAdminStats().then(setStats).catch(() => {});
+        }
+      } catch (_e) { stopPolling(); setSyncing(false); }
+    }, 2000);
+  };
+
+  const stopPolling = () => {
+    if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+  };
+
+  useEffect(() => () => stopPolling(), []);
 
   const handleSync = async () => {
     setSyncing(true);
-    setSyncMsg("");
+    setSyncStatus(null);
     try {
       await syncPublicApi();
-      setSyncMsg("✓ 동기화가 완료됐어요!");
-    } catch (err: any) {
-      setSyncMsg(err.response?.data?.message ?? "❌ 동기화 중 오류가 발생했어요");
-    } finally {
-      setSyncing(false);
-    }
+    } catch (_e) { /* 202는 정상 */ }
+    startPolling();
   };
 
   const statItems = stats ? [
@@ -135,16 +156,36 @@ function DashboardTab() {
       <div className="admin-card">
         <h3 className="admin-card-title">공공 API 수동 동기화</h3>
         <p className="admin-card-desc">
-          공공데이터포털에서 최신 정책 데이터를 즉시 가져와요.
-          자동 크롤링은 매일 오전 6시, 오후 6시에 실행돼요.
+          온통청년 OpenAPI에서 최신 정책 데이터를 가져와요.
+          자동 동기화는 매일 오전 6시, 오후 6시에 실행돼요.
         </p>
         <div className="sync-row">
           <button className="sync-btn" onClick={handleSync} disabled={syncing}>
             <i className={syncing ? "ri-loader-4-line spin" : "ri-refresh-line"} />
             {syncing ? "동기화 중..." : "지금 동기화하기"}
           </button>
-          {syncMsg && <span className="sync-msg">{syncMsg}</span>}
         </div>
+
+        {/* 동기화 상태 패널 */}
+        {syncStatus && (
+          <div className={`sync-status-panel ${syncStatus.running ? "running" : syncStatus.errorMsg ? "error" : "done"}`}>
+            {syncStatus.running ? (
+              <><i className="ri-loader-4-line spin" /> 동기화 진행 중... 잠시 기다려주세요</>
+            ) : syncStatus.errorMsg ? (
+              <><i className="ri-error-warning-line" /> 오류: {syncStatus.errorMsg}</>
+            ) : (
+              <div className="sync-result">
+                <i className="ri-checkbox-circle-line" />
+                <span>동기화 완료! ({syncStatus.finishedAt})</span>
+                <div className="sync-counts">
+                  <span className="sync-count new">신규 {syncStatus.saved}건</span>
+                  <span className="sync-count update">업데이트 {syncStatus.updated}건</span>
+                  <span className="sync-count delete">마감처리 {syncStatus.deleted}건</span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -234,19 +275,30 @@ function UserManageTab() {
 
 // ── 정책 관리 탭 ───────────────────────────────────────
 function PolicyManageTab() {
-  // 정책 목록은 기존 /api/policies 사용
-  const [policies, setPolicies] = useState<any[]>([]);
+  const [policies, setPolicies]   = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [keyword, setKeyword] = useState("");
+  const [keyword, setKeyword]     = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages]   = useState(1);
+  const [total, setTotal]             = useState(0);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const PAGE_SIZE = 20;
 
-  const fetchPolicies = (kw?: string) => {
+  const fetchPolicies = (kw?: string, page = 1) => {
     setIsLoading(true);
-    const params = new URLSearchParams({ size: "20" });
+    const params = new URLSearchParams({
+      size: String(PAGE_SIZE),
+      page: String(page - 1), // 백엔드 0-based
+    });
     if (kw) params.set("keyword", kw);
-    fetch(`http://localhost:8080/api/policies?${params}`)
+    const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8080";
+    fetch(`${API_BASE}/api/policies?${params}`)
       .then((r) => r.json())
-      .then((data) => setPolicies(data.policies ?? []))
+      .then((data) => {
+        setPolicies(data.policies ?? []);
+        setTotalPages(data.totalPages ?? 1);
+        setTotal(data.totalElements ?? 0);
+      })
       .catch(() => {})
       .finally(() => setIsLoading(false));
   };
@@ -256,15 +308,21 @@ function PolicyManageTab() {
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setKeyword(val);
+    setCurrentPage(1);
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => fetchPolicies(val), 400);
+    debounceRef.current = setTimeout(() => fetchPolicies(val, 1), 400);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    fetchPolicies(keyword, page);
   };
 
   const handleDelete = async (id: number, title: string) => {
     if (!confirm(`"${title}" 정책을 삭제할까요?`)) return;
     try {
       await deletePolicy(id);
-      setPolicies((prev) => prev.filter((p) => p.id !== id));
+      fetchPolicies(keyword, currentPage);
     } catch (err: any) {
       alert(err.response?.data?.message ?? "삭제 중 오류가 발생했어요");
     }
@@ -273,7 +331,9 @@ function PolicyManageTab() {
   return (
     <div className="admin-card">
       <div className="admin-table-header">
-        <h3 className="admin-card-title">정책 목록</h3>
+        <h3 className="admin-card-title">
+          정책 목록 <span style={{ fontSize: "0.8rem", color: "var(--gray-400)", fontWeight: 400 }}>총 {total}개</span>
+        </h3>
         <div className="admin-search">
           <i className="ri-search-line" />
           <input placeholder="정책명 검색" value={keyword} onChange={handleSearch} />
@@ -313,6 +373,34 @@ function PolicyManageTab() {
             ))}
           </tbody>
         </table>
+      )}
+
+      {/* 페이지네이션 */}
+      {totalPages > 1 && (
+        <div className="admin-pagination">
+          <button className="admin-page-btn" onClick={() => handlePageChange(1)} disabled={currentPage === 1}>
+            <i className="ri-skip-left-line" />
+          </button>
+          <button className="admin-page-btn" onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
+            <i className="ri-arrow-left-s-line" />
+          </button>
+          {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+            const start = Math.max(1, Math.min(currentPage - 2, totalPages - 4));
+            const page = start + i;
+            return (
+              <button key={page} className={`admin-page-btn ${currentPage === page ? "active" : ""}`}
+                onClick={() => handlePageChange(page)}>
+                {page}
+              </button>
+            );
+          })}
+          <button className="admin-page-btn" onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>
+            <i className="ri-arrow-right-s-line" />
+          </button>
+          <button className="admin-page-btn" onClick={() => handlePageChange(totalPages)} disabled={currentPage === totalPages}>
+            <i className="ri-skip-right-line" />
+          </button>
+        </div>
       )}
     </div>
   );
