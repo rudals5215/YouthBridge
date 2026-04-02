@@ -1,0 +1,13 @@
+# Render 백엔드 배포 환경변수
+
+DB_URL=jdbc:postgresql://db.yflxrfwisanqaonlmxzd.supabase.co:5432/postgres
+DB_USERNAME=postgres
+DB_PASSWORD=starex8674!??
+DDL_AUTO=update
+
+JWT_SECRET=youthbridge-jwt-secret-key-must-be-at-least-32-characters-long-2024
+
+KAKAO_CLIENT_ID=2a20189772741d8f70c47c384207ec5b
+KAKAO_REDIRECT_URI=https://[배포된_프론트_URL]/oauth/kakao
+
+YOUTH_API_KEY=3fa7f900-ae42-4b8b-aeda-6428212969f3
