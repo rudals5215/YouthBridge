@@ -2,7 +2,6 @@
 FROM eclipse-temurin:17-jdk-alpine AS build
 WORKDIR /app
 
-# 핵심: backend 폴더만 복사
 COPY YouthBridgebackend /app
 
 RUN chmod +x ./gradlew
