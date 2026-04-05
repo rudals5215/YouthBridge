@@ -16,4 +16,4 @@ COPY --from=build /app/build/libs/*.jar app.jar
 ENV TZ=Asia/Seoul
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Djava.net.preferIPv4Stack=true", "-jar", "app.jar"]
