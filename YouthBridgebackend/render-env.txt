@@ -1,8 +1,8 @@
 # Render 백엔드 배포 환경변수
 
-DB_URL=jdbc:postgresql://db.yflxrfwisanqaonlmxzd.supabase.co:5432/postgres
-DB_USERNAME=postgres
-DB_PASSWORD=starex8674!??
+DB_URL=jdbc:jdbc:postgresql://ep-shiny-hat-a1q8l10k-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
+DB_USERNAME=neondb_owner
+DB_PASSWORD=npg_VXncHv6RUxC4
 DDL_AUTO=update
 
 JWT_SECRET=youthbridge-jwt-secret-key-must-be-at-least-32-characters-long-2024
