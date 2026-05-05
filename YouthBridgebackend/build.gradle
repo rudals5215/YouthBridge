@@ -27,15 +27,16 @@ dependencies {
     // 웹 (REST API)
     implementation 'org.springframework.boot:spring-boot-starter-web'
 
-    // JPA + MariaDB
+    // JPA
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    // PostgreSQL (Supabase 무료 DB)
+
+    // PostgreSQL (Neon)
     runtimeOnly 'org.postgresql:postgresql'
 
     // 시큐리티
     implementation 'org.springframework.boot:spring-boot-starter-security'
 
-    // JWT (로그인 토큰 발급용)
+    // JWT
     implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
@@ -43,23 +44,20 @@ dependencies {
     // 입력값 검증
     implementation 'org.springframework.boot:spring-boot-starter-validation'
 
-    // API 문서 자동 생성 (Swagger UI)
+    // Swagger UI
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6'
 
-    // Lombok (getter/setter 자동 생성)
+    // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
-    // 개발 편의 (코드 바꾸면 자동 재시작)
+    // 개발 편의
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
     // 테스트
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-
-    implementation 'org.postgresql:postgresql'
-
 }
 
 tasks.named('test') {
