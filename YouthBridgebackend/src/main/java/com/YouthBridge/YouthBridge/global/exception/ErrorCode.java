@@ -32,6 +32,9 @@ public enum ErrorCode {
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰이에요", "INVALID_TOKEN"),
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "만료된 토큰이에요. 다시 로그인해주세요", "EXPIRED_TOKEN"),
 
+    // ErrorCode.java의 ── 서버 오류 ── 섹션 등에 추가
+    EXTERNAL_API_ERROR(HttpStatus.BAD_GATEWAY, "외부 API 서비스에 문제가 발생했어요", "EXTERNAL_API_ERROR"),
+
     // ── 소셜 로그인 관련 ──────────────────────────────────
     KAKAO_LOGIN_FAILED(HttpStatus.BAD_GATEWAY, "카카오 로그인 중 오류가 발생했어요. 잠시 후 다시 시도해주세요", "KAKAO_LOGIN_FAILED"),
 

@@ -80,7 +80,8 @@ public class PolicyCrawlerService {
         crawlAndSave();
     }
 
-    @Transactional
+//    @Transactional
+@Transactional(readOnly = false)
     public void crawlAndSave() {
         syncStatusService.start();
         log.info("[Crawler] 온통청년 API 크롤링 시작");
@@ -111,10 +112,17 @@ public class PolicyCrawlerService {
                 YouthPolicyCrawlerDto response =
                     restTemplate.getForObject(url, YouthPolicyCrawlerDto.class);
 
+//                if (response == null || response.getResult() == null
+//                        || response.getResultCode() != 200) {
+//                    log.warn("[Crawler] 응답 이상 종료");
+//                    break;
+//                }
+
                 if (response == null || response.getResult() == null
                         || response.getResultCode() != 200) {
-                    log.warn("[Crawler] 응답 이상 종료");
-                    break;
+                    log.warn("[Crawler] {} 페이지 응답 이상으로 건너뜁니다.", page);
+                    page++; // 다음 페이지로 기회를 줍니다.
+                    continue;
                 }
 
                 List<YouthPolicyCrawlerDto.PolicyItem> items =

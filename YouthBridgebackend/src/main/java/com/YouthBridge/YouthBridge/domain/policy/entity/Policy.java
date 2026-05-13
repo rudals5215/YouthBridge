@@ -29,7 +29,8 @@ public class Policy {
     private String title;
 
     // 정책 요약 설명
-    @Column(length = 500)
+//    @Column(length = 500)
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     // 지원 내용 (상세)
@@ -61,7 +62,8 @@ public class Policy {
     private LocalDate applyEndDate;
 
     // 신청 URL
-    @Column(length = 500)
+//    @Column(length = 1000)
+    @Column(columnDefinition = "TEXT")
     private String applyUrl;
 
     // 주관 기관

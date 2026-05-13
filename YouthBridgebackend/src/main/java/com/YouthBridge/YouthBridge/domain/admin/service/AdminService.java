@@ -60,6 +60,7 @@ public class AdminService {
 
     // 비동기 — 즉시 반환 후 백그라운드에서 크롤링
     @Async
+    @Transactional
     public void syncPublicApiAsync() {
         log.info("[Admin] 공공 API 수동 동기화 시작 (비동기)");
         crawlerService.crawlAndSave();
