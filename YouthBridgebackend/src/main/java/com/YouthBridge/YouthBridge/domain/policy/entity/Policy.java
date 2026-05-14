@@ -2,10 +2,12 @@ package com.YouthBridge.YouthBridge.domain.policy.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.sql.Types;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -30,6 +32,7 @@ public class Policy {
 
     // 정책 요약 설명
 //    @Column(length = 500)
+    @JdbcTypeCode(Types.LONGVARCHAR) // PostgreSQL의 TEXT 타입과 매핑되도록 명시
     @Column(columnDefinition = "TEXT")
     private String description;
 
