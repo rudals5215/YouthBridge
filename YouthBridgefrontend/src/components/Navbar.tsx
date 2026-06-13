@@ -31,11 +31,13 @@ function Navbar() {
 
   // 로그인 시 안읽은 알림 수 조회
   useEffect(() => {
-    if (!isLoggedIn) return; // setUnreadCount(0) 제거 — 로그아웃 시 clearAuth에서 처리
-    fetchUnreadCount()
-      .then(setUnreadCount)
-      .catch(() => {});
-  }, [isLoggedIn, location.pathname]);
+    // 🔴 중요: isLoggedIn이 '확실한 true'이고, user 객체가 '확실히 존재'할 때만 안으로 진입합니다.
+    if (isLoggedIn === true && user) {
+      fetchUnreadCount()
+        .then(setUnreadCount)
+        .catch(() => {});
+    }
+  }, [isLoggedIn, user, location.pathname]);
 
   // 알림 패널 외부 클릭 시 닫기
   useEffect(() => {
