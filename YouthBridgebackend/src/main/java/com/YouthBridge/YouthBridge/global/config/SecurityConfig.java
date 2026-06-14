@@ -85,15 +85,19 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
-    // CORS 설정 — 프론트(localhost:5173)에서 오는 요청 허용
+    // CORS 설정 — 로컬 및 배포된 프론트엔드 주소 허용
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
+        // ⚠️ 여기에 실제 배포된 Vercel 도메인들을 명시해 줍니다!
         config.setAllowedOrigins(List.of(
-            "http://localhost:5173",   // Vite 개발 서버
-            "http://localhost:3000"    // 혹시 CRA 쓰면 이것도
+                "http://localhost:5173",   // Vite 개발 서버
+                "http://localhost:3000",   // CRA 개발 서버
+                "https://youth-bridge.vercel.app", // 버셀 대표 도메인
+                "https://youth-bridge-9453am9km-rudals5215s-projects.vercel.app" // 버셀 특정 배포 도메인
         ));
+
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true); // 쿠키/인증 헤더 허용
