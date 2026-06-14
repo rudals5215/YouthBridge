@@ -95,7 +95,7 @@ public class SecurityConfig {
                 "http://localhost:5173",   // Vite 개발 서버
                 "http://localhost:3000",   // CRA 개발 서버
                 "https://youth-bridge.vercel.app", // 버셀 대표 도메인
-                "https://youthbridge.kro.kr.kro.kr",     // 👈 여기에 새로운 무료 도메인 추가!
+                "https://youthbridge.kro.kr",     // 👈 여기에 새로운 무료 도메인 추가!
                 "https://youth-bridge-9453am9km-rudals5215s-projects.vercel.app" // 버셀 특정 배포 도메인
         ));
 
