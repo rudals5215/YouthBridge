@@ -56,24 +56,39 @@ const CATEGORIES = [
   },
 ];
 
-// 지역별 배경 이미지 (Unsplash 무료 이미지)
+// 지역별 배경 이미지
 const REGION_IMAGES: Record<string, string> = {
+  // 서울: 청계천
   seoul:
-    "https://images.unsplash.com/photo-1538485399081-7c8272e3c9d8?w=400&q=80",
+    "https://images.unsplash.com/photo-1601621915196-2621bfb0cd6e?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8JUVDJTg0JTlDJUVDJTlBJUI4fGVufDB8fDB8fHww",
+
+  // 경기: 수원 화성
   gyeonggi:
-    "https://images.unsplash.com/photo-1596422846543-75c6fc197f07?w=400&q=80",
+    "https://images.unsplash.com/photo-1673201069831-b54f304484e2?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8JUVDJTg4JTk4JUVDJTlCJTkwfGVufDB8fDB8fHww",
+
+  // 부산: 광안대교
   busan:
-    "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&q=80",
+    "https://images.unsplash.com/photo-1702040093537-b8c34eaa0f5c?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTl8fCVFQiVCNiU4MCVFQyU4MiVCMHxlbnwwfHwwfHx8MA%3D%3D",
+
+  // 인천: 송도 센트럴파크 야경
   incheon:
-    "https://images.unsplash.com/photo-1601247387326-f8bcb5a234d4?w=400&q=80",
+    "https://images.unsplash.com/photo-1675135531731-609e26ada232?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8JUVDJTlEJUI4JUVDJUIyJTlDfGVufDB8fDB8fHww",
+
+  // 대구: 대구 수성못
   daegu:
-    "https://images.unsplash.com/photo-1633350948498-78ca8f4b3e5e?w=400&q=80",
+    "https://www.telltrip.com/wp-content/uploads/2026/03/daegu-suseongmot-lake-cherry-blossom-tour5.webp",
+
+  // 대전: 대전 엑스포 과학공원 한빛탑 전경
   daejeon:
-    "https://images.unsplash.com/photo-1583422409516-2895a77efded?w=400&q=80",
+    "https://cdn.cctoday.co.kr/news/photo/202308/2182496_619426_4256.jpg",
+
+  // 광주: 광주 무등산
   gwangju:
-    "https://images.unsplash.com/photo-1589365278144-c9e705f843ba?w=400&q=80",
+    "https://i.namu.wiki/i/v2LP0GxoRvJfgjYbpLQMD2zosiWnpglgLApuK1zFkJMafLaA9CFUwAwIIuPOZAL6TTdp8rVwvDX5M_cqQNLo-g.webp",
+
+  // 울산: 울산 산업단지 야경
   ulsan:
-    "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&q=80",
+    "https://search.pstatic.net/sunny/?src=https%3A%2F%2Ft1.daumcdn.net%2Fcafeattach%2F1LBcw%2F86567620368afcc4b60d78a4112c145a4dce9f32&type=sc960_832",
 };
 
 const POPULAR_KEYWORDS = [
@@ -511,20 +526,31 @@ function Home() {
           </div>
           <div className="region-grid">
             {FIXED_REGIONS.map((r) => {
-              const count = stats?.regionCount?.[r.value];
+              const count =
+                stats?.regionCount?.[r.value] ||
+                stats?.regionCount?.[r.value.toUpperCase()] ||
+                stats?.regionCount?.[r.label];
+
+              // 💡 r.value가 대문자(SEOUL)든 소문자(seoul)든 무조건 소문자로 바꿔서 이미지 주소를 매칭합니다.
+              const regionKey = r.value.toLowerCase();
+              const imageUrl = REGION_IMAGES[regionKey];
+
               return (
                 <Link
                   key={r.value}
                   to={`/policies?region=${r.value}`}
                   className="region-card"
                 >
-                  {REGION_IMAGES[r.value] && (
+                  {/* 💡 imageUrl이 존재할 때만 렌더링 */}
+                  {imageUrl && (
                     <img
-                      src={REGION_IMAGES[r.value]}
+                      src={imageUrl}
                       alt={r.label}
                       className="region-card-img"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = "none";
+                        // 💡 404 에러 시 숨기지 말고, 기본 플레이스홀더 이미지로 대체해서 엑박/까만 화면을 방지합니다.
+                        e.currentTarget.src =
+                          "https://images.unsplash.com/photo-1517154421773-0529f29ea451?w=400&q=80";
                       }}
                     />
                   )}

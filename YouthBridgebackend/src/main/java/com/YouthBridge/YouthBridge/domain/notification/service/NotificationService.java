@@ -37,7 +37,12 @@ public class NotificationService {
 
     // 안읽은 알림 수
     public Map<String, Long> getUnreadCount(Long userId) {
-        long count = notificationRepository.countByUserIdAndIsRead(userId, false);
+        // 알림 목록과 동일하게 7일 기준점을 만들어 줍니다.
+        LocalDateTime since = LocalDateTime.now().minusDays(7);
+
+        // 수정된 Repository 메소드를 호출하며 기준 시간을 인자로 넘깁니다.
+        long count = notificationRepository.countByUserIdAndIsReadAndCreatedAtAfter(userId, false, since);
+
         return Map.of("count", count);
     }
 

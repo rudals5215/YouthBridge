@@ -34,8 +34,22 @@ function Navbar() {
     // 🔴 중요: isLoggedIn이 '확실한 true'이고, user 객체가 '확실히 존재'할 때만 안으로 진입합니다.
     if (isLoggedIn === true && user) {
       fetchUnreadCount()
-        .then(setUnreadCount)
-        .catch(() => {});
+        .then((count) => {
+          // 서버에서 정상적으로 숫자가 넘어왔을 때만 세팅하고,
+          // 혹시 인터셉터에서 { data: null } 등이 넘어오면 안전하게 0으로 처리합니다.
+          if (typeof count === "number") {
+            setUnreadCount(count);
+          } else {
+            setUnreadCount(0);
+          }
+        })
+        .catch(() => {
+          // 에러가 나면 무조건 알림 개수를 0으로 안전하게 초기화합니다.
+          setUnreadCount(0);
+        });
+    } else {
+      // 💡 로그아웃 상태이거나 유저 정보가 없을 때도 확실하게 0개로 비워줍니다.
+      setUnreadCount(0);
     }
   }, [isLoggedIn, user, location.pathname]);
 

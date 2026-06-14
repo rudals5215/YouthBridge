@@ -23,8 +23,11 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
         @Param("since") LocalDateTime since
     );
 
-    // 안읽은 알림 수
-    long countByUserIdAndIsRead(Long userId, boolean isRead);
+    // 기존의 countByUserIdAndIsRead 대신, 뒤에 CreatedAtAfter를 추가해 줍니다.
+    long countByUserIdAndIsReadAndCreatedAtAfter(Long userId, boolean isRead, LocalDateTime since);
+
+//    // 안읽은 알림 수
+//    long countByUserIdAndIsRead(Long userId, boolean isRead);
 
     // 전체 읽음 처리
     @Modifying
