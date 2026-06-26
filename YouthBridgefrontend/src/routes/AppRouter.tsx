@@ -13,6 +13,8 @@ import AdminPage from "../pages/AdminPage";
 import NoticePage from "../pages/NoticePage";
 import AboutPage from "../pages/AboutPage";
 import ContactPage from "../pages/ContactPage";
+import PrivacyPage from "../pages/PrivacyPage";
+import TermsPage from "../pages/TermsPage";
 import KakaoCallback from "../pages/KakaoCallback";
 import NotFound from "../pages/NotFound";
 
@@ -30,6 +32,8 @@ function AppRouter() {
         <Route path="/notices"      element={<NoticePage />} />
         <Route path="/about"        element={<AboutPage />} />
         <Route path="/contact"      element={<ContactPage />} />
+        <Route path="/privacy"      element={<PrivacyPage />} />
+        <Route path="/terms"        element={<TermsPage />} />
         <Route path="/oauth/kakao"  element={<KakaoCallback />} />
 
         <Route path="/mypage" element={
