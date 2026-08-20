@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { fetchHomeStats, type HomeStats } from "../apis/homeApi";
-import { fetchPolicies, type Policy } from "../apis/policyApi";
-import { getRegionLabel } from "../constants/Regions";
+import { fetchPolicies, fetchPolicySnapshot, type Policy } from "../apis/policyApi";import { getRegionLabel } from "../constants/Regions";
 import "./Home.css";
 
 const CATEGORIES = [
@@ -47,14 +46,20 @@ function Home() {
   const [latestPolicies, setLatestPolicies] = useState<Policy[]>([]);
 
   useEffect(() => {
-    // 홈 통계 + 최신 정책 병렬 호출
-    Promise.all([
-      fetchHomeStats(),
-      fetchPolicies({ size: 4, page: 0 }),
-    ]).then(([statsData, policyData]) => {
-      setStats(statsData);
-      setLatestPolicies(policyData.policies);
-    }).catch(() => {});
+    // 1) 스냅샷 먼저 즉시 표시 (콜드스타트 영향 없음)
+    fetchPolicySnapshot().then((snapshot) => {
+      if (snapshot && snapshot.policies.length > 0) {
+        setLatestPolicies(snapshot.policies.slice(0, 4));
+      }
+    });
+
+    // 2) 진짜 최신 데이터 (느릴 수 있음, 도착하면 조용히 덮어씀)
+    Promise.all([fetchHomeStats(), fetchPolicies({ size: 4, page: 0 })])
+      .then(([statsData, policyData]) => {
+        setStats(statsData);
+        setLatestPolicies(policyData.policies); // 스냅샷 → 진짜 데이터로 교체
+      })
+      .catch(() => {});
   }, []);
 
   const handleSearch = () => {

@@ -45,13 +45,12 @@ export interface PolicyFilters {
 
 // 정책 목록 조회 (필터 + 페이지네이션)
 export const fetchPolicies = async (
-  filters: PolicyFilters = {}
+  filters: PolicyFilters = {},
 ): Promise<PolicyListResponse> => {
   const { categories, ...rest } = filters;
 
   const params = new URLSearchParams();
 
-  // status 기본값 ACTIVE (마감 정책은 기본 제외)
   if (!rest.status) rest.status = "ACTIVE";
 
   Object.entries(rest).forEach(([k, v]) => {
@@ -62,7 +61,10 @@ export const fetchPolicies = async (
     categories.forEach((c) => params.append("categories", c));
   }
 
-  const response = await axiosInstance.get<PolicyListResponse>("/api/policies", { params });
+  const response = await axiosInstance.get<PolicyListResponse>(
+    "/api/policies",
+    { params },
+  );
   return response.data;
 };
 
@@ -71,3 +73,18 @@ export const fetchPolicyById = async (id: number): Promise<Policy> => {
   const response = await axiosInstance.get<Policy>(`/api/policies/${id}`);
   return response.data;
 };
+
+// 정책 스냅샷 조회 (콜드스타트 대비, GitHub raw 파일에서 즉시 로드)
+export const fetchPolicySnapshot =
+  async (): Promise<PolicyListResponse | null> => {
+    try {
+      const response = await fetch(
+        "https://raw.githubusercontent.com/rudals5215/YouthBridge/main/data/policies-snapshot.json",
+      );
+      if (!response.ok) return null;
+      return await response.json();
+    } catch (e) {
+      console.warn("스냅샷 로드 실패, 실제 API 응답을 기다립니다.", e);
+      return null;
+    }
+  };

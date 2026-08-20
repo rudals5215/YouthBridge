@@ -1,0 +1,26 @@
+name: Update Policy Snapshot
+
+on:
+  schedule:
+    - cron: '*/20 * * * *'  # 20분마다 실행
+  workflow_dispatch:  # 수동 실행도 가능하게
+
+jobs:
+  update-snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch policies from backend
+        run: |
+          curl -s --max-time 60 \
+            https://your-render-backend.onrender.com/api/policies \
+            -o data/policies-snapshot.json
+
+      - name: Commit snapshot if changed
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add data/policies-snapshot.json
+          git diff --staged --quiet || git commit -m "chore: update policy snapshot"
+          git push
